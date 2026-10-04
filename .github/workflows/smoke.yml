@@ -80,12 +80,22 @@ jobs:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: python3 scripts/smoke_pages.py
 
-      - name: Upload dev server log on failure
+      - name: Run auth flow tests (login, logout, session expiry)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.base_url == ''
+        env:
+          BASE_URL: http://localhost:8080
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: python3 scripts/test_auth_flows.py
+
+      - name: Upload failure artifacts (screenshots, console logs, dev server log)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: dev-server-log
-          path: dev-server.log
+          name: smoke-failure-artifacts
+          path: |
+            dev-server.log
+            smoke-artifacts/
+            auth-artifacts/
           if-no-files-found: ignore
 
   # Runs after a successful main-branch build: smoke-tests the LIVE site and
@@ -122,3 +132,19 @@ jobs:
           BASE_URL: ${{ vars.LIVE_URL || 'https://removalworksolution.online' }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: python3 scripts/smoke_pages.py
+
+      - name: Auth flow tests on live site
+        env:
+          BASE_URL: ${{ vars.LIVE_URL || 'https://removalworksolution.online' }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: python3 scripts/test_auth_flows.py
+
+      - name: Upload failure artifacts (screenshots + console logs)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-smoke-failure-artifacts
+          path: |
+            smoke-artifacts/
+            auth-artifacts/
+          if-no-files-found: ignore
