@@ -19,6 +19,7 @@ export const Route = createFileRoute("/api/scan/bulk/")({
         if (!p.success) return a.err("VALIDATION_ERROR", "Send JSON { \"urls\": [\"<Google Maps link>\", ...] } or a CSV with a google_url column.");
         urls = p.data.urls; batchId = p.data.batch_id;
       }
+      if (!urls.filter((u) => u.trim()).length) return a.err("VALIDATION_ERROR", "The list or CSV is empty — add at least one Google Maps link.");
       const v = a.normalizeUrls(urls, core.validGoogleUrl);
       if (!v.valid.length) return a.err("INVALID_GOOGLE_URL", "No valid Google Maps links found.", { validation: v });
       if (v.valid.length > 25) return a.err("VALIDATION_ERROR", "Send at most 25 valid URLs per call. Use batch_id to add more to the same batch.", { validation: { valid: v.valid.length, invalid: v.invalid, duplicate: v.duplicate } });
