@@ -210,7 +210,6 @@ async def main():
                     await save_artifacts(page, console, "real-expiry")
                 else:
                     sess = json.loads(session_raw)
-                    now = int(asyncio.get_event_loop().time())  # placeholder, replaced below
                     import time
                     now = int(time.time())
                     expires_at = int(sess.get("expires_at") or 0)
