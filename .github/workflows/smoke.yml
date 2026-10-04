@@ -14,6 +14,11 @@ on:
         description: "Admin password (optional here; falls back to the ADMIN_PASSWORD secret)"
         required: false
         type: string
+      run_real_expiry:
+        description: "Run the real session-timeout test (waits out the configured token TTL, ~1 hour). true/false"
+        required: false
+        default: "false"
+        type: string
 
 jobs:
   smoke:
@@ -85,6 +90,17 @@ jobs:
         env:
           BASE_URL: http://localhost:8080
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: python3 scripts/test_auth_flows.py
+
+      # Real session-timeout test: only on manual dispatch with run_real_expiry=true.
+      # Waits out the ACTUAL configured token TTL (~1 hour by default) with token
+      # refresh blocked, then verifies the app automatically logs the user out.
+      - name: Real session-timeout test (waits out configured TTL)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_real_expiry == 'true'
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || 'http://localhost:8080' }}
+          ADMIN_PASSWORD: ${{ github.event.inputs.admin_password || secrets.ADMIN_PASSWORD }}
+          RUN_REAL_EXPIRY: "1"
         run: python3 scripts/test_auth_flows.py
 
       - name: Upload failure artifacts (screenshots, console logs, dev server log)
