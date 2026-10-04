@@ -11,6 +11,14 @@ Env:
     ADMIN_EMAIL     default removalwork59@gmail.com
     ADMIN_PASSWORD  required
     ARTIFACTS_DIR   default auth-artifacts (screenshots + console logs on failure)
+    RUN_REAL_EXPIRY set to "1" to run the real session-timeout test: logs in,
+                    reads the ACTUAL token TTL from the issued session, blocks
+                    token refresh, waits out the configured timeout, then
+                    verifies the app automatically logs the user out.
+                    Skipped by default because it waits for the full TTL
+                    (Supabase default: 3600s = ~1 hour).
+    EXPIRY_DRY_RUN  set to "1" to only detect and print the configured TTL
+                    without waiting (validates the test mechanics).
 
 Exit code 0 = all flows OK, 1 = at least one failure.
 Requires: playwright (python) with chromium installed.
@@ -164,6 +172,76 @@ async def main():
             record("logout signs out and protects routes", False, str(e)[:150])
             await save_artifacts(page, console, "logout")
         await ctx.close()
+
+        # --- 6. Real session timeout: wait out the configured access-token TTL ---
+        # Unlike test 4 (which just wipes storage), this logs in, reads the REAL
+        # expiry from the issued token, blocks refresh-token grants so the session
+        # genuinely expires, waits out the configured timeout, then verifies the
+        # app automatically redirects to /auth on the next navigation.
+        if os.environ.get("RUN_REAL_EXPIRY") == "1" or os.environ.get("EXPIRY_DRY_RUN") == "1":
+            ctx = await browser.new_context(viewport={"width": 1280, "height": 1800})
+            page = await ctx.new_page()
+            console = []
+            page.on("console", lambda m: console.append(f"[{m.type}] {m.text[:200]}"))
+            page.on("pageerror", lambda e: console.append(f"[pageerror] {str(e)[:200]}"))
+
+            # Block refresh-token grants so the session cannot renew itself.
+            async def block_refresh(route):
+                post = route.request.post_data or ""
+                if "refresh_token" in post or "grant_type=refresh_token" in route.request.url:
+                    await route.abort()
+                else:
+                    await route.continue_()
+            await ctx.route("**/auth/v1/token**", block_refresh)
+
+            try:
+                for attempt in range(3):
+                    await fill_login(page, EMAIL, PASSWORD)
+                    if "/auth" not in page.url:
+                        break
+                    print(f"login retry {attempt + 1}")
+
+                # Read the ACTUAL configured TTL from the issued session.
+                session_raw = await page.evaluate(
+                    "(() => { const k = Object.keys(window.localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token')); return k ? window.localStorage.getItem(k) : null; })()"
+                )
+                if not session_raw:
+                    record("real session timeout", False, "no session found in localStorage after login")
+                    await save_artifacts(page, console, "real-expiry")
+                else:
+                    sess = json.loads(session_raw)
+                    import time
+                    now = int(time.time())
+                    expires_at = int(sess.get("expires_at") or 0)
+                    expires_in = int(sess.get("expires_in") or 0)
+                    ttl = expires_at - now if expires_at else expires_in
+                    print(f"configured session TTL detected: {ttl}s (expires_at={expires_at}, expires_in={expires_in})")
+
+                    if ttl <= 0 or ttl > 86400:
+                        record("real session timeout", False, f"implausible TTL {ttl}s")
+                        await save_artifacts(page, console, "real-expiry")
+                    elif os.environ.get("EXPIRY_DRY_RUN") == "1":
+                        record("real session timeout (dry run: TTL detection)", True, f"TTL={ttl}s")
+                    else:
+                        # Wait out the configured timeout + safety buffer.
+                        wait_s = ttl + 90
+                        print(f"waiting {wait_s}s for the configured session timeout to pass...")
+                        waited = 0
+                        while waited < wait_s:
+                            step = min(60, wait_s - waited)
+                            await page.wait_for_timeout(step * 1000)
+                            waited += step
+                            print(f"  waited {waited}/{wait_s}s")
+                        await page.goto(f"{BASE}/dashboard", wait_until="domcontentloaded")
+                        await page.wait_for_timeout(6000)
+                        ok = "/auth" in page.url
+                        record("real session timeout → automatic logout", ok, f"TTL={ttl}s, url={page.url}")
+                        if not ok:
+                            await save_artifacts(page, console, "real-expiry")
+            except Exception as e:
+                record("real session timeout", False, str(e)[:150])
+                await save_artifacts(page, console, "real-expiry")
+            await ctx.close()
 
         await browser.close()
 

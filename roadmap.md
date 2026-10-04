@@ -25,4 +25,5 @@
 - [x] Post-deploy smoke: after main push, live URL tested automatically; failure fails the deployment check
 - [ ] CI live checks will run once the GitHub repo is connected (user action: Plus menu → GitHub → Connect project)
 - [x] Auth flow automated tests: scripts/test_auth_flows.py — 5/5 PASS (wrong password, login, signed-in redirect, session expiry, logout guard)
+- [x] Real session-timeout test: RUN_REAL_EXPIRY=1 reads actual token TTL (3600s), blocks refresh, waits out configured timeout, verifies auto-logout; dry-run verified (TTL detection PASS); manual via workflow_dispatch run_real_expiry=true
 - [x] Smoke workflow: failure artifacts (screenshots + console logs) uploaded on failure in both jobs
