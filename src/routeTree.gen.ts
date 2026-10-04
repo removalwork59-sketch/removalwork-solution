@@ -24,7 +24,6 @@ import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiBusinessIdRouteImport } from './routes/api/business/$id'
-import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiReportsIndexRouteImport } from './routes/api/reports/index'
 import { Route as ApiReportsIdRouteImport } from './routes/api/reports/$id'
 import { Route as ApiReviewsIdRouteImport } from './routes/api/reviews/$id'
@@ -36,6 +35,9 @@ import { Route as ApiSettingsIndexRouteImport } from './routes/api/settings/inde
 import { Route as ApiSettingsStatusRouteImport } from './routes/api/settings/status'
 import { Route as ApiReportsIdDownloadRouteImport } from './routes/api/reports/$id.download'
 import { Route as ApiReviewsIdAnalysisRouteImport } from './routes/api/reviews/$id.analysis'
+import { Route as ApiScanBulkIndexRouteImport } from './routes/api/scan/bulk/index'
+import { Route as ApiScanBulkIdRouteImport } from './routes/api/scan/bulk/$id'
+import { Route as ApiScanBulkIdRetryRouteImport } from './routes/api/scan/bulk/$id.retry'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,11 +114,6 @@ const ApiBusinessIdRoute = ApiBusinessIdRouteImport.update({
   path: '/api/business/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
-  id: '/api/public/health',
-  path: '/api/public/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiReportsIndexRoute = ApiReportsIndexRouteImport.update({
   id: '/api/reports/',
   path: '/api/reports/',
@@ -172,6 +169,21 @@ const ApiReviewsIdAnalysisRoute = ApiReviewsIdAnalysisRouteImport.update({
   path: '/analysis',
   getParentRoute: () => ApiReviewsIdRoute,
 } as any)
+const ApiScanBulkIndexRoute = ApiScanBulkIndexRouteImport.update({
+  id: '/api/scan/bulk/',
+  path: '/api/scan/bulk/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScanBulkIdRoute = ApiScanBulkIdRouteImport.update({
+  id: '/api/scan/bulk/$id',
+  path: '/api/scan/bulk/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScanBulkIdRetryRoute = ApiScanBulkIdRetryRouteImport.update({
+  id: '/retry',
+  path: '/retry',
+  getParentRoute: () => ApiScanBulkIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -187,7 +199,6 @@ export interface FileRoutesByFullPath {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/business/$id': typeof ApiBusinessIdRoute
-  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/reports/$id': typeof ApiReportsIdRouteWithChildren
   '/api/reviews/$id': typeof ApiReviewsIdRouteWithChildren
   '/api/scan/$id': typeof ApiScanIdRoute
@@ -200,6 +211,9 @@ export interface FileRoutesByFullPath {
   '/api/settings/': typeof ApiSettingsIndexRoute
   '/api/reports/$id/download': typeof ApiReportsIdDownloadRoute
   '/api/reviews/$id/analysis': typeof ApiReviewsIdAnalysisRoute
+  '/api/scan/bulk/$id': typeof ApiScanBulkIdRouteWithChildren
+  '/api/scan/bulk/': typeof ApiScanBulkIndexRoute
+  '/api/scan/bulk/$id/retry': typeof ApiScanBulkIdRetryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -215,7 +229,6 @@ export interface FileRoutesByTo {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/business/$id': typeof ApiBusinessIdRoute
-  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/reports/$id': typeof ApiReportsIdRouteWithChildren
   '/api/reviews/$id': typeof ApiReviewsIdRouteWithChildren
   '/api/scan/$id': typeof ApiScanIdRoute
@@ -228,6 +241,9 @@ export interface FileRoutesByTo {
   '/api/settings': typeof ApiSettingsIndexRoute
   '/api/reports/$id/download': typeof ApiReportsIdDownloadRoute
   '/api/reviews/$id/analysis': typeof ApiReviewsIdAnalysisRoute
+  '/api/scan/bulk/$id': typeof ApiScanBulkIdRouteWithChildren
+  '/api/scan/bulk': typeof ApiScanBulkIndexRoute
+  '/api/scan/bulk/$id/retry': typeof ApiScanBulkIdRetryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -245,7 +261,6 @@ export interface FileRoutesById {
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/business/$id': typeof ApiBusinessIdRoute
-  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/reports/$id': typeof ApiReportsIdRouteWithChildren
   '/api/reviews/$id': typeof ApiReviewsIdRouteWithChildren
   '/api/scan/$id': typeof ApiScanIdRoute
@@ -258,6 +273,9 @@ export interface FileRoutesById {
   '/api/settings/': typeof ApiSettingsIndexRoute
   '/api/reports/$id/download': typeof ApiReportsIdDownloadRoute
   '/api/reviews/$id/analysis': typeof ApiReviewsIdAnalysisRoute
+  '/api/scan/bulk/$id': typeof ApiScanBulkIdRouteWithChildren
+  '/api/scan/bulk/': typeof ApiScanBulkIndexRoute
+  '/api/scan/bulk/$id/retry': typeof ApiScanBulkIdRetryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -275,7 +293,6 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/session'
     | '/api/business/$id'
-    | '/api/public/health'
     | '/api/reports/$id'
     | '/api/reviews/$id'
     | '/api/scan/$id'
@@ -288,6 +305,9 @@ export interface FileRouteTypes {
     | '/api/settings/'
     | '/api/reports/$id/download'
     | '/api/reviews/$id/analysis'
+    | '/api/scan/bulk/$id'
+    | '/api/scan/bulk/'
+    | '/api/scan/bulk/$id/retry'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -303,7 +323,6 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/session'
     | '/api/business/$id'
-    | '/api/public/health'
     | '/api/reports/$id'
     | '/api/reviews/$id'
     | '/api/scan/$id'
@@ -316,6 +335,9 @@ export interface FileRouteTypes {
     | '/api/settings'
     | '/api/reports/$id/download'
     | '/api/reviews/$id/analysis'
+    | '/api/scan/bulk/$id'
+    | '/api/scan/bulk'
+    | '/api/scan/bulk/$id/retry'
   id:
     | '__root__'
     | '/'
@@ -332,7 +354,6 @@ export interface FileRouteTypes {
     | '/api/auth/logout'
     | '/api/auth/session'
     | '/api/business/$id'
-    | '/api/public/health'
     | '/api/reports/$id'
     | '/api/reviews/$id'
     | '/api/scan/$id'
@@ -345,6 +366,9 @@ export interface FileRouteTypes {
     | '/api/settings/'
     | '/api/reports/$id/download'
     | '/api/reviews/$id/analysis'
+    | '/api/scan/bulk/$id'
+    | '/api/scan/bulk/'
+    | '/api/scan/bulk/$id/retry'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -356,7 +380,6 @@ export interface RootRouteChildren {
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiBusinessIdRoute: typeof ApiBusinessIdRoute
-  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiReportsIdRoute: typeof ApiReportsIdRouteWithChildren
   ApiReviewsIdRoute: typeof ApiReviewsIdRouteWithChildren
   ApiScanIdRoute: typeof ApiScanIdRoute
@@ -366,6 +389,8 @@ export interface RootRouteChildren {
   ApiScanIndexRoute: typeof ApiScanIndexRoute
   ApiScansIndexRoute: typeof ApiScansIndexRoute
   ApiSettingsIndexRoute: typeof ApiSettingsIndexRoute
+  ApiScanBulkIdRoute: typeof ApiScanBulkIdRouteWithChildren
+  ApiScanBulkIndexRoute: typeof ApiScanBulkIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -475,13 +500,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBusinessIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/health': {
-      id: '/api/public/health'
-      path: '/api/public/health'
-      fullPath: '/api/public/health'
-      preLoaderRoute: typeof ApiPublicHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/reports/': {
       id: '/api/reports/'
       path: '/api/reports'
@@ -559,6 +577,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiReviewsIdAnalysisRouteImport
       parentRoute: typeof ApiReviewsIdRoute
     }
+    '/api/scan/bulk/': {
+      id: '/api/scan/bulk/'
+      path: '/api/scan/bulk'
+      fullPath: '/api/scan/bulk/'
+      preLoaderRoute: typeof ApiScanBulkIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/scan/bulk/$id': {
+      id: '/api/scan/bulk/$id'
+      path: '/api/scan/bulk/$id'
+      fullPath: '/api/scan/bulk/$id'
+      preLoaderRoute: typeof ApiScanBulkIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/scan/bulk/$id/retry': {
+      id: '/api/scan/bulk/$id/retry'
+      path: '/retry'
+      fullPath: '/api/scan/bulk/$id/retry'
+      preLoaderRoute: typeof ApiScanBulkIdRetryRouteImport
+      parentRoute: typeof ApiScanBulkIdRoute
+    }
   }
 }
 
@@ -609,6 +648,18 @@ const ApiReviewsIdRouteWithChildren = ApiReviewsIdRoute._addFileChildren(
   ApiReviewsIdRouteChildren,
 )
 
+interface ApiScanBulkIdRouteChildren {
+  ApiScanBulkIdRetryRoute: typeof ApiScanBulkIdRetryRoute
+}
+
+const ApiScanBulkIdRouteChildren: ApiScanBulkIdRouteChildren = {
+  ApiScanBulkIdRetryRoute: ApiScanBulkIdRetryRoute,
+}
+
+const ApiScanBulkIdRouteWithChildren = ApiScanBulkIdRoute._addFileChildren(
+  ApiScanBulkIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -618,7 +669,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiBusinessIdRoute: ApiBusinessIdRoute,
-  ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiReportsIdRoute: ApiReportsIdRouteWithChildren,
   ApiReviewsIdRoute: ApiReviewsIdRouteWithChildren,
   ApiScanIdRoute: ApiScanIdRoute,
@@ -628,6 +678,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiScanIndexRoute: ApiScanIndexRoute,
   ApiScansIndexRoute: ApiScansIndexRoute,
   ApiSettingsIndexRoute: ApiSettingsIndexRoute,
+  ApiScanBulkIdRoute: ApiScanBulkIdRouteWithChildren,
+  ApiScanBulkIndexRoute: ApiScanBulkIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
