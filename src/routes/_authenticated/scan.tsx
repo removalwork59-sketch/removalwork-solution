@@ -1,93 +1,126 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Loader2, Search, KeyRound, AlertTriangle } from "lucide-react";
-import { runScan, getSystemStatus } from "@/lib/scan.functions";
+import { Check, Loader2, Search, KeyRound, AlertTriangle, X } from "lucide-react";
+import { scanFetch, scanAnalyze, getSystemStatus } from "@/lib/scan.functions";
 import { scanQuery } from "@/lib/data";
-import { BusinessHeader, RiskAnalysis } from "@/components/scan-result";
+import { BusinessHeader, RatingAnalysis, RiskAnalysis } from "@/components/scan-result";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/scan")({
-  head: () => ({ meta: [{ title: "New Scan — SEO Vale" }, { name: "description", content: "Scan a Google Maps business for review risk." }] }),
+  head: () => ({ meta: [{ title: "New Scan — Review & Rating Scanner" }, { name: "description", content: "Scan a Google business for review policy risk." }] }),
   component: ScanPage,
 });
 
-const STEPS = ["Resolving business", "Reading public business data", "Reading available reviews", "Analyzing reviews", "Preparing report"];
+const STEPS = ["Resolving business", "Reading public business information", "Retrieving available reviews", "Analyzing review signals", "Preparing report"];
+// Steps 1-3 belong to the server "fetch" stage, 4-5 to the "analyze" stage.
+type Phase = "idle" | "fetch" | "analyze" | "done" | "error";
+
+function looksLikeGoogleUrl(v: string) {
+  try {
+    const u = new URL(v.trim());
+    return /(^|\.)google\.[a-z.]+$/.test(u.hostname) || /^(maps\.app\.goo\.gl|goo\.gl|g\.page|g\.co)$/.test(u.hostname);
+  } catch { return false; }
+}
 
 function ScanPage() {
   const status = useServerFn(getSystemStatus);
-  const scan = useServerFn(runScan);
+  const fetchStage = useServerFn(scanFetch);
+  const analyzeStage = useServerFn(scanAnalyze);
   const qc = useQueryClient();
   const { data: sys } = useQuery({ queryKey: ["system-status"], queryFn: () => status() });
   const [url, setUrl] = useState("");
-  const [running, setRunning] = useState(false);
-  const [step, setStep] = useState(0);
+  const [touched, setTouched] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [failedAt, setFailedAt] = useState<"fetch" | "analyze" | null>(null);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
   const [scanId, setScanId] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setInterval>>(undefined);
 
-  useEffect(() => () => clearInterval(timer.current), []);
+  const urlValid = looksLikeGoogleUrl(url);
+  const running = phase === "fetch" || phase === "analyze";
+  const keyMissing = sys && !sys.googleConfigured;
 
   async function start(e: React.FormEvent) {
     e.preventDefault();
-    setError(null); setScanId(null); setRunning(true); setStep(0);
-    timer.current = setInterval(() => setStep((s) => Math.min(s + 1, STEPS.length - 1)), 1800);
+    setTouched(true);
+    if (!urlValid) return;
+    setError(null); setScanId(null); setFailedAt(null); setPhase("fetch");
     try {
-      const res = await scan({ data: { url } });
-      if (res.ok) { setStep(STEPS.length); setScanId(res.scanId); }
-      else setError({ code: res.code, message: res.message });
+      const a = await fetchStage({ data: { url: url.trim() } });
+      if (!a.ok) { setFailedAt("fetch"); setError(a); if (a.scanId) setScanId(a.scanId); setPhase("error"); return; }
+      setScanId(a.scanId); setPhase("analyze");
+      const b = await analyzeStage({ data: { scanId: a.scanId } });
+      if (!b.ok) { setFailedAt("analyze"); setError(b); setPhase("error"); return; }
+      setPhase("done");
     } catch {
+      setFailedAt(phase === "analyze" ? "analyze" : "fetch");
       setError({ code: "NETWORK", message: "Network error. Check your connection and try again." });
+      setPhase("error");
     } finally {
-      clearInterval(timer.current);
-      setRunning(false);
       qc.invalidateQueries({ queryKey: ["scans"] });
+      qc.invalidateQueries({ queryKey: ["scan"] });
     }
   }
 
-  const keyMissing = sys && !sys.googleConfigured;
+  function stepState(i: number): "done" | "active" | "failed" | "idle" {
+    const inFetch = i < 3;
+    if (phase === "done") return "done";
+    if (phase === "fetch") return inFetch ? "active" : "idle";
+    if (phase === "analyze") return inFetch ? "done" : "active";
+    if (phase === "error") {
+      if (failedAt === "fetch") return inFetch ? "failed" : "idle";
+      return inFetch ? "done" : "failed";
+    }
+    return "idle";
+  }
 
   return (
     <>
       <div className="bg-scanner relative overflow-hidden rounded-3xl p-6 text-primary-foreground shadow-[var(--shadow-lift)] sm:p-12">
-        <div className="grid-lines absolute inset-0" />
-        <div className="relative mx-auto max-w-3xl">
-          <div className="text-xs font-bold uppercase tracking-[0.25em] opacity-70">Google Review Scanner</div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Paste a Google Maps business URL</h1>
-          <p className="mt-2 opacity-75">Scan publicly available Google business and review information.</p>
+        <div className="grid-lines absolute inset-0" aria-hidden />
+        <div className="relative mx-auto max-w-3xl text-center">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Scan a Google Business</h1>
+          <p className="mx-auto mt-3 max-w-xl opacity-75">Paste a public Google Maps or Business URL to analyze available business rating and review information.</p>
 
           {keyMissing && (
-            <div className="mt-6 flex items-start gap-3 rounded-xl bg-card/10 p-4 text-sm ring-1 ring-primary-foreground/20">
-              <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-star" />
-              <div><b>API key required.</b> Live scanning activates automatically once the Google Places API key is added. Demo reports (clearly labelled) are available in <Link to="/reports" className="underline">Reports</Link>.</div>
+            <div className="mt-6 flex items-start gap-3 rounded-xl bg-card/10 p-4 text-left text-sm ring-1 ring-primary-foreground/20">
+              <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-star" aria-hidden />
+              <div className="flex-1"><b>Google Places API · Configuration required.</b> Live scanning activates automatically once the API key is added.</div>
+              <Link to="/settings" className="shrink-0 rounded-md bg-card px-3 py-1.5 text-xs font-semibold text-foreground">Configure API</Link>
             </div>
           )}
 
-          <form onSubmit={start} className="mt-6 flex flex-col gap-3 rounded-2xl bg-card p-2 shadow-[var(--shadow-glow)] sm:flex-row">
+          <form onSubmit={start} noValidate className="mt-6 flex flex-col gap-3 rounded-2xl bg-card p-2 shadow-[var(--shadow-glow)] sm:flex-row">
+            <label htmlFor="maps-url" className="sr-only">Google Maps or Business URL</label>
             <div className="flex flex-1 items-center gap-3 px-3">
-              <Search className="h-5 w-5 text-muted-foreground" />
-              <input value={url} onChange={(e) => setUrl(e.target.value)} required disabled={running}
-                placeholder="https://maps.app.goo.gl/… or google.com/maps/place/…"
-                className="h-12 w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground" />
+              <Search className="h-5 w-5 text-muted-foreground" aria-hidden />
+              <input id="maps-url" value={url} onChange={(e) => setUrl(e.target.value)} onBlur={() => setTouched(true)} disabled={running}
+                aria-invalid={touched && !!url && !urlValid} aria-describedby="url-help"
+                placeholder="Paste Google Maps / Business URL"
+                className="h-14 w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground" />
             </div>
-            <Button type="submit" size="lg" className="h-12 px-8" disabled={running || !!keyMissing}>
-              {running ? <Loader2 className="animate-spin" /> : null} Scan reviews
+            <Button type="submit" size="lg" className="h-14 px-8" disabled={running || !!keyMissing}>
+              {running && <Loader2 className="animate-spin" />} Scan business
             </Button>
           </form>
+          <p id="url-help" className="mt-2 min-h-5 text-left text-xs" role="status">
+            {touched && url && !urlValid ? <span className="text-star">Invalid Google URL — use a link like google.com/maps/place/… or maps.app.goo.gl/…</span> : <span className="opacity-60">Supports google.com/maps/place, maps.app.goo.gl, g.page and ?q=place_id links.</span>}
+          </p>
 
-          {(running || scanId) && (
-            <ol className="mt-8 grid gap-2 sm:grid-cols-5">
+          {phase !== "idle" && (
+            <ol className="mt-6 grid gap-2 text-left sm:grid-cols-5" aria-label="Scan progress">
               {STEPS.map((s, i) => {
-                const done = i < step, active = i === step && running;
+                const st = stepState(i);
                 return (
-                  <li key={s} className={`relative overflow-hidden rounded-xl p-3 text-xs transition-all duration-500 ${done ? "bg-card/20" : active ? "bg-card/15 ring-1 ring-brand" : "bg-card/5 opacity-50"}`}>
-                    {active && <div className="animate-sweep absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent" />}
-                    <div className="relative flex items-center gap-2 font-mono opacity-70">
-                      {done ? <Check className="h-3.5 w-3.5 text-risk-normal" /> : active ? <span className="animate-pulse-ring h-2 w-2 rounded-full bg-brand" /> : null}
-                      0{i + 1}
+                  <li key={s} aria-current={st === "active" ? "step" : undefined}
+                    className={`relative overflow-hidden rounded-xl p-3 text-xs transition-all duration-500 ${st === "done" ? "bg-card/20" : st === "active" ? "bg-card/15 ring-1 ring-brand" : st === "failed" ? "bg-risk-high/30 ring-1 ring-risk-high" : "bg-card/5 opacity-50"}`}>
+                    {st === "active" && <div className="animate-sweep absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent" aria-hidden />}
+                    <div className="relative flex items-center gap-2 font-mono opacity-80">
+                      {st === "done" ? <Check className="h-3.5 w-3.5 text-risk-normal" aria-hidden /> : st === "active" ? <span className="animate-pulse-ring h-2 w-2 rounded-full bg-brand" aria-hidden /> : st === "failed" ? <X className="h-3.5 w-3.5" aria-hidden /> : null}
+                      0{i + 1} <span className="sr-only">{st}</span>
                     </div>
-                    <div className="relative mt-1 font-medium">{s}{active ? "…" : ""}</div>
+                    <div className="relative mt-1 font-medium">{s}</div>
                   </li>
                 );
               })}
@@ -97,34 +130,37 @@ function ScanPage() {
       </div>
 
       {error && (
-        <div className="surface animate-rise mt-6 flex items-start gap-3 border-risk-high/30 p-5">
-          <AlertTriangle className="mt-0.5 h-5 w-5 text-risk-high" />
-          <div>
+        <div role="alert" className="surface animate-rise mt-6 flex items-start gap-3 border-risk-high/30 p-5">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-risk-high" aria-hidden />
+          <div className="flex-1">
             <div className="font-semibold">{errorTitle(error.code)}</div>
             <div className="mt-1 text-sm text-muted-foreground">{error.message}</div>
           </div>
+          {error.code === "API_KEY_REQUIRED" && <Button size="sm" variant="outline" asChild><Link to="/settings">Configure API</Link></Button>}
         </div>
       )}
 
-      {scanId && <ScanResult id={scanId} />}
+      {scanId && phase !== "fetch" && <ScanResult id={scanId} />}
     </>
   );
 }
 
 function errorTitle(code: string) {
   return ({
-    INVALID_URL: "Invalid Google URL", NOT_FOUND: "Business not found", API_UNAVAILABLE: "API unavailable",
-    API_KEY_REQUIRED: "API key required", RATE_LIMIT: "Rate limit reached", INSUFFICIENT_DATA: "Insufficient data",
-    GOOGLE_ERROR: "Temporary Google service error", NETWORK: "Network error",
+    INVALID_URL: "Invalid Google URL", NOT_FOUND: "Business not found", API_UNAVAILABLE: "Google API error",
+    API_KEY_REQUIRED: "Google API key missing", RATE_LIMIT: "API quota / rate limit", INSUFFICIENT_DATA: "Insufficient data",
+    NO_REVIEWS: "No available reviews", GOOGLE_ERROR: "Google API error", NETWORK: "Network error",
+    AI_UNAVAILABLE: "AI analysis unavailable", DB_UNAVAILABLE: "Database unavailable",
   } as Record<string, string>)[code] ?? "Scan failed";
 }
 
 function ScanResult({ id }: { id: string }) {
   const { data } = useQuery(scanQuery(id));
-  if (!data?.scan) return null;
+  if (!data?.scan?.business_name) return null;
   return (
     <div className="mt-8">
       <BusinessHeader scan={data.scan} />
+      <RatingAnalysis scan={data.scan} reviews={data.reviews} />
       <RiskAnalysis scan={data.scan} reviews={data.reviews} />
     </div>
   );
