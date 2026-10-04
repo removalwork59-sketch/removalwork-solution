@@ -1,3 +1,4 @@
+import { ScanTimeline } from "@/components/ops-panels";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -104,6 +105,7 @@ function ReportDetail() {
           Classification is automated and advisory; it does not guarantee a policy violation. Google independently determines whether a review violates its policies and whether removal is appropriate.
         </footer>
       </article>
+      <ScanTimeline scanId={scan.id} isSeed={!!scan.is_seed} />
     </>
   );
 }

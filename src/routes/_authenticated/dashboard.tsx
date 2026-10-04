@@ -1,3 +1,4 @@
+import { OperationsPanel } from "@/components/ops-panels";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -111,6 +112,7 @@ function Dashboard() {
           </section>
         </div>
       </div>
+      <OperationsPanel />
     </>
   );
 }
