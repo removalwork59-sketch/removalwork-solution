@@ -45,6 +45,8 @@ export type Database = {
           created_at: string
           id: string
           is_seed: boolean
+          latitude: number | null
+          longitude: number | null
           maps_uri: string | null
           name: string
           place_id: string | null
@@ -59,6 +61,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_seed?: boolean
+          latitude?: number | null
+          longitude?: number | null
           maps_uri?: string | null
           name: string
           place_id?: string | null
@@ -73,6 +77,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_seed?: boolean
+          latitude?: number | null
+          longitude?: number | null
           maps_uri?: string | null
           name?: string
           place_id?: string | null
@@ -116,32 +122,47 @@ export type Database = {
       reports: {
         Row: {
           created_at: string
+          high_risk_count: number
           id: string
           is_seed: boolean
+          medium_risk_count: number
+          normal_count: number
           recommended_action: string | null
+          report_data: Json
           report_number: string
           scan_id: string
           status: string
+          summary: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          high_risk_count?: number
           id?: string
           is_seed?: boolean
+          medium_risk_count?: number
+          normal_count?: number
           recommended_action?: string | null
+          report_data?: Json
           report_number: string
           scan_id: string
           status?: string
+          summary?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          high_risk_count?: number
           id?: string
           is_seed?: boolean
+          medium_risk_count?: number
+          normal_count?: number
           recommended_action?: string | null
+          report_data?: Json
           report_number?: string
           scan_id?: string
           status?: string
+          summary?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -156,6 +177,8 @@ export type Database = {
       }
       review_analyses: {
         Row: {
+          analysis_provider: string | null
+          analysis_version: string | null
           category: string | null
           confidence: number
           created_at: string
@@ -169,6 +192,8 @@ export type Database = {
           signals: string[]
         }
         Insert: {
+          analysis_provider?: string | null
+          analysis_version?: string | null
           category?: string | null
           confidence?: number
           created_at?: string
@@ -182,6 +207,8 @@ export type Database = {
           signals?: string[]
         }
         Update: {
+          analysis_provider?: string | null
+          analysis_version?: string | null
           category?: string | null
           confidence?: number
           created_at?: string
@@ -282,6 +309,7 @@ export type Database = {
           business_id: string | null
           business_name: string | null
           category: string | null
+          completed_at: string | null
           created_at: string
           data_source: string
           error: string | null
@@ -297,6 +325,7 @@ export type Database = {
           reviews_retrieved: number
           source_url: string
           stage: string | null
+          started_at: string | null
           status: string
           total_reviews: number | null
           user_id: string | null
@@ -306,6 +335,7 @@ export type Database = {
           business_id?: string | null
           business_name?: string | null
           category?: string | null
+          completed_at?: string | null
           created_at?: string
           data_source?: string
           error?: string | null
@@ -321,6 +351,7 @@ export type Database = {
           reviews_retrieved?: number
           source_url: string
           stage?: string | null
+          started_at?: string | null
           status?: string
           total_reviews?: number | null
           user_id?: string | null
@@ -330,6 +361,7 @@ export type Database = {
           business_id?: string | null
           business_name?: string | null
           category?: string | null
+          completed_at?: string | null
           created_at?: string
           data_source?: string
           error?: string | null
@@ -345,6 +377,7 @@ export type Database = {
           reviews_retrieved?: number
           source_url?: string
           stage?: string | null
+          started_at?: string | null
           status?: string
           total_reviews?: number | null
           user_id?: string | null
