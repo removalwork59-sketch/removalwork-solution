@@ -78,7 +78,7 @@ export function parseMapsUrl(raw: string): Parsed {
   if (q?.startsWith("place_id:")) return { placeId: q.slice(9) };
   const out: Parsed = {};
   const placeMatch = url.pathname.match(/\/maps\/place\/([^/]+)/);
-  if (placeMatch) out.query = decodeURIComponent(placeMatch[1].replace(/\+/g, " "));
+  if (placeMatch) out.query = decodeURIComponent((placeMatch[1] ?? "").replace(/\+/g, " "));
   else if (q) out.query = q;
   const at = url.pathname.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
   if (at) { out.lat = Number(at[1]); out.lng = Number(at[2]); }
@@ -98,7 +98,7 @@ export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Pr
     if (!parsed.query) throw new ScanError("INVALID_URL", "Couldn't find a business in that link. Open the business on Google Maps and copy its link.");
     const body: Record<string, unknown> = { textQuery: parsed.query, pageSize: 1 };
     if (parsed.lat != null && parsed.lng != null) {
-      body.locationBias = { circle: { center: { latitude: parsed.lat, longitude: parsed.lng }, radius: 2000 } };
+      body["locationBias"] = { circle: { center: { latitude: parsed.lat, longitude: parsed.lng }, radius: 2000 } };
     }
     const search = await googleFetch(apiKey, "/places:searchText", { method: "POST", body: JSON.stringify(body), fieldMask: "places.id" });
     placeId = search?.places?.[0]?.id;

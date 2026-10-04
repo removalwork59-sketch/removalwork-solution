@@ -27,7 +27,7 @@ export const scanQuery = (id: string) =>
       if (s.error) throw s.error;
       if (r.error) throw r.error;
       const order = { high: 0, medium: 1, normal: 2 } as Record<string, number>;
-      return { scan: s.data, reviews: (r.data ?? []).sort((a, b) => order[a.risk] - order[b.risk]) };
+      return { scan: s.data, reviews: (r.data ?? []).sort((a, b) => (order[a.risk] ?? 2) - (order[b.risk] ?? 2)) };
     },
   });
 

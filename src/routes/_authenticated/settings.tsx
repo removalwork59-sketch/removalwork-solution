@@ -37,7 +37,7 @@ function SettingsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [cur, setCur] = useState(""); const [pw, setPw] = useState("");
-  const [name, setName] = useState<string>((user.user_metadata?.name as string) ?? "");
+  const [name, setName] = useState<string>((user.user_metadata?.["name"] as string) ?? "");
 
   async function saveName() {
     const { error } = await supabase.auth.updateUser({ data: { name } });
