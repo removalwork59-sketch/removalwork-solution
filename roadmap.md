@@ -8,3 +8,5 @@
 
 - [x] Phase 3: bulk URL scanning (paste/CSV, validation, batches, retry)
 - [ ] Morning handoff: add Google key, run real single + small bulk scan (blocked: key)
+- [x] REST API routes under /api (auth, scan, bulk, history, business, reviews, reports, settings, health)
+- [x] VPS deployment: Dockerfile, compose, nginx, scripts/, DEPLOYMENT.md, API.md

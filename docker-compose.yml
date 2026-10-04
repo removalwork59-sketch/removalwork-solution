@@ -1,0 +1,23 @@
+# One container: the app. Database and sign-in are the hosted backend (DATABASE_URL / SUPABASE_URL).
+services:
+  app:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${SUPABASE_PROJECT_ID}
+        VITE_PUBLIC_APP_URL: ${APP_URL}
+    image: review-scanner:latest
+    container_name: review-scanner
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    # Only reachable from the server itself; Nginx is the public entry point.
+    ports:
+      - "127.0.0.1:3000:3000"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
