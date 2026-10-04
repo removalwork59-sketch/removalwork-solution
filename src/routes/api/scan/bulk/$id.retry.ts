@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/scan/bulk/$id/retry")({
       if (!a.isUuid(params.id)) return a.err("VALIDATION_ERROR", "Invalid batch id.");
       const core = await import("@/lib/scan-core.server");
       const { data: batch } = await supabase.from("scan_batches").select("id").eq("id", params.id).maybeSingle();
-      if (!batch) return a.err("NOT_FOUND", "Batch not found.");
+      if (!batch) return a.err("RESOURCE_NOT_FOUND", "Batch not found.");
       const { data: scans } = await supabase.from("scans").select("id, source_url, status").eq("batch_id", params.id).order("created_at", { ascending: false });
       const latest = new Map<string, string>();
       for (const s of scans ?? []) if (!latest.has(s.source_url)) latest.set(s.source_url, s.status);

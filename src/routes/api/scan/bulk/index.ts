@@ -22,10 +22,12 @@ export const Route = createFileRoute("/api/scan/bulk/")({
       const v = a.normalizeUrls(urls, core.validGoogleUrl);
       if (!v.valid.length) return a.err("INVALID_GOOGLE_URL", "No valid Google Maps links found.", { validation: v });
       if (v.valid.length > 25) return a.err("VALIDATION_ERROR", "Send at most 25 valid URLs per call. Use batch_id to add more to the same batch.", { validation: { valid: v.valid.length, invalid: v.invalid, duplicate: v.duplicate } });
+      const svc = await import("@/lib/google-places-service.server");
+      if (!svc.GooglePlacesService.isConfigured()) return a.err("GOOGLE_API_NOT_CONFIGURED", "Google Places API is not configured. Add the API key, then run the batch.", { validation: v });
       let batch;
       if (batchId) {
         const { data } = await supabase.from("scan_batches").select("id, batch_number, total").eq("id", batchId).maybeSingle();
-        if (!data) return a.err("NOT_FOUND", "Batch not found.");
+        if (!data) return a.err("RESOURCE_NOT_FOUND", "Batch not found.");
         await supabase.from("scan_batches").update({ total: data.total + v.valid.length }).eq("id", data.id);
         batch = data;
       } else {

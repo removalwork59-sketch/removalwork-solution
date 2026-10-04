@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/scan/bulk/$id")({
     return a.guarded(request, async ({ supabase }) => {
       if (!a.isUuid(params.id)) return a.err("VALIDATION_ERROR", "Invalid batch id.");
       const { data: batch } = await supabase.from("scan_batches").select("*").eq("id", params.id).maybeSingle();
-      if (!batch) return a.err("NOT_FOUND", "Batch not found.");
+      if (!batch) return a.err("RESOURCE_NOT_FOUND", "Batch not found.");
       const { data: scans } = await supabase.from("scans").select("id, source_url, business_name, status, stage, rating, reviews_retrieved, high_count, medium_count, error, created_at").eq("batch_id", params.id).order("created_at");
       const list = scans ?? [];
       const cnt = (f: (s: (typeof list)[number]) => boolean) => list.filter(f).length;

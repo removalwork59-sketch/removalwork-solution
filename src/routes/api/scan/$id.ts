@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/scan/$id")({
       if (!a.isUuid(params.id)) return a.err("VALIDATION_ERROR", "Invalid scan id.");
       const { data, error } = await supabase.from("scans").select("*").eq("id", params.id).maybeSingle();
       if (error) return a.err("DATABASE_ERROR", "Database unavailable.");
-      if (!data) return a.err("NOT_FOUND", "Scan not found.");
+      if (!data) return a.err("RESOURCE_NOT_FOUND", "Scan not found.");
       return a.ok({ ...data, data_label: data.is_seed ? "Development data" : "Live Google Places data" });
     });
   } } },
