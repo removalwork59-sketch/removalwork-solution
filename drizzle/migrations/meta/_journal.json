@@ -43,6 +43,13 @@
       "when": 1791075320491,
       "tag": "0005_scan_batches",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791078052886,
+      "tag": "0006_phase4_tracking_actions_quality",
+      "breakpoints": true
     }
   ]
 }
