@@ -50,6 +50,13 @@
       "when": 1791078052886,
       "tag": "0006_phase4_tracking_actions_quality",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791078506623,
+      "tag": "0007_phase4_debug_findings",
+      "breakpoints": true
     }
   ]
 }
