@@ -1,5 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { profileQuery } from "@/lib/profile";
+import { APP_DOMAIN } from "@/lib/config";
 import { useState, type ReactNode } from "react";
 import { LayoutDashboard, ScanSearch, History, FileText, Settings, LogOut, Menu, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +33,7 @@ function Brand() {
 function SidebarBody({ email, onNavigate }: { email: string; onNavigate?: () => void }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { data: profile } = useQuery(profileQuery());
   async function logout() {
     await qc.cancelQueries();
     qc.clear();
@@ -50,13 +53,14 @@ function SidebarBody({ email, onNavigate }: { email: string; onNavigate?: () => 
         ))}
       </nav>
       <div className="mt-auto space-y-1 border-t pt-4">
-        <Link to="/settings" onClick={onNavigate} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-sidebar-accent">
-          <div className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-xs font-bold text-brand">{email.slice(0, 1).toUpperCase()}</div>
-          <span className="truncate text-sm">{email}</span>
+        <Link to="/profile" onClick={onNavigate} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-sidebar-accent" activeProps={{ className: "bg-sidebar-accent" }}>
+          <Avatar name={profile?.name ?? "Admin"} url={profile?.avatarUrl ?? null} size={28} />
+          <span className="min-w-0"><span className="block truncate text-sm font-medium">{profile?.name ?? "Admin"}</span><span className="block truncate text-[11px] text-muted-foreground">{email}</span></span>
         </Link>
         <button onClick={logout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent">
           <LogOut className="h-4 w-4" /> Logout
         </button>
+        <div className="px-3 pt-2 text-[10px] text-muted-foreground">{APP_DOMAIN}</div>
       </div>
     </div>
   );
@@ -117,4 +121,14 @@ export function StatusPill({ status, error }: { status: string; error?: string |
   };
   const [label, cls] = m[status] ?? [status, "bg-muted text-muted-foreground"];
   return <span title={error ?? undefined} className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
+}
+
+export function Avatar({ name, url, size = 32 }: { name: string; url: string | null; size?: number }) {
+  return url ? (
+    <img src={url} alt={`${name} profile photo`} width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
+  ) : (
+    <div aria-hidden className="grid shrink-0 place-items-center rounded-full bg-primary font-bold text-primary-foreground" style={{ width: size, height: size, fontSize: size * 0.42 }}>
+      {(name || "A").slice(0, 1).toUpperCase()}
+    </div>
+  );
 }

@@ -7,6 +7,7 @@ import { RefreshCw, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getSystemStatus, getAuditLog, logAudit } from "@/lib/scan.functions";
 import { PageHeader } from "@/components/app-shell";
+import { APP_DOMAIN } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +78,7 @@ function SettingsPage() {
         <Card title="Account">
           <div className="flex gap-2"><div className="flex-1 space-y-2"><Label htmlFor="admin-name">Admin name</Label><Input id="admin-name" value={name} onChange={(e) => setName(e.target.value)} /></div><Button className="self-end" variant="outline" onClick={saveName}>Save</Button></div>
           <Row k="Admin email" v={user.email} />
+          <Row k="Domain" v={APP_DOMAIN} />
           <form onSubmit={changePw} className="space-y-3 border-t pt-4">
             <div className="text-sm font-medium">Password</div>
             <Label htmlFor="cur-pw" className="sr-only">Current password</Label>
