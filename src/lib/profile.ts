@@ -10,7 +10,7 @@ export const profileQuery = () =>
       if (!user) throw new Error("Not signed in");
       let { data: p } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
       if (!p) {
-        const ins = await supabase.from("profiles").insert({ user_id: user.id, username: user.email }).select("*").single();
+        const ins = await supabase.from("profiles").insert({ user_id: user.id, username: user.email ?? null }).select("*").single();
         p = ins.data;
       }
       let avatarUrl: string | null = null;
