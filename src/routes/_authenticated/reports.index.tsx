@@ -1,3 +1,5 @@
+import { ActionCenter, QualityCenter } from "@/components/ops-panels";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Eye } from "lucide-react";
@@ -18,6 +20,11 @@ function ReportsPage() {
   return (
     <>
       <PageHeader title="Reports" subtitle="Evidence reports generated from completed scans." />
+      <Tabs defaultValue="reports">
+        <TabsList className="mb-4"><TabsTrigger value="reports">Reports</TabsTrigger><TabsTrigger value="actions">Action Center</TabsTrigger><TabsTrigger value="quality">Quality Center</TabsTrigger></TabsList>
+        <TabsContent value="actions"><ActionCenter /></TabsContent>
+        <TabsContent value="quality"><QualityCenter /></TabsContent>
+        <TabsContent value="reports">
       <BatchInsightsPanel />
       {!isLoading && reports.length === 0 ? <EmptyState title="No reports generated." /> : (
         <div className="surface overflow-x-auto">
@@ -46,6 +53,8 @@ function ReportsPage() {
           </table>
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

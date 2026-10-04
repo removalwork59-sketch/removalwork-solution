@@ -93,3 +93,53 @@ export async function analyzeReviews(apiKey: string, businessName: string, categ
     };
   });
 }
+
+export const PROMPT_VERSION = "risk-v2";
+export const VERIFY_MODEL = "openai/gpt-5-mini";
+
+/** Explainable guard: a flag must be backed by a quote or signal; a low star rating alone is never a violation. */
+export function enforceEvidence(a: ReviewAnalysis): ReviewAnalysis {
+  if ((a.risk === "high" || a.risk === "medium") && !a.evidence && a.signals.length === 0) {
+    return { ...a, risk: "requires_review", reason: `${a.reason} (Downgraded: no quoted evidence or policy signal was returned.)` };
+  }
+  return a;
+}
+
+export type Verification = { model: string; provider: string; agrees: boolean; risk: RiskLevel; reason: string; checked_at: string } | { model: string; provider: string; error: string; checked_at: string };
+
+/** Second-model check for high/medium flags. Never upgrades risk; disagreement moves the item to "requires_review". */
+export async function verifyFlags(apiKey: string, items: { text: string; rating: number; first: ReviewAnalysis }[]): Promise<Verification[]> {
+  if (!items.length) return [];
+  const now = new Date().toISOString();
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: VERIFY_MODEL,
+        messages: [
+          { role: "system", content: SYSTEM + "\nYou are a second, independent reviewer. Another model flagged these reviews. Judge each one yourself. Reply with risk and a one-sentence reason." },
+          { role: "user", content: items.map((it, i) => `#${i} (${it.rating}★): ${it.text || "(no text)"}\nFirst model said: ${it.first.risk} — ${it.first.reason}`).join("\n\n") },
+        ],
+        tools: [{ type: "function", function: { name: "verify", parameters: { type: "object", properties: { results: { type: "array", items: { type: "object", properties: { index: { type: "integer" }, risk: { type: "string", enum: ["high", "medium", "normal", "requires_review"] }, reason: { type: "string" } }, required: ["index", "risk", "reason"] } } }, required: ["results"] } } }],
+        tool_choice: { type: "function", function: { name: "verify" } },
+      }),
+    });
+    if (!res.ok) throw new Error(`verifier HTTP ${res.status}`);
+    const json = await res.json();
+    const out: any[] = JSON.parse(json?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}").results ?? [];
+    return items.map((it, i) => {
+      const r = out.find((x) => x.index === i);
+      if (!r) return { model: VERIFY_MODEL, provider: AI_PROVIDER, error: "No verification result returned", checked_at: now };
+      const agrees = r.risk === "high" || r.risk === "medium";
+      return { model: VERIFY_MODEL, provider: AI_PROVIDER, agrees, risk: r.risk, reason: String(r.reason ?? ""), checked_at: now };
+    });
+  } catch (e) {
+    return items.map(() => ({ model: VERIFY_MODEL, provider: AI_PROVIDER, error: (e as Error).message, checked_at: now }));
+  }
+}
+
+export async function reviewHash(text: string, rating: number) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${PROMPT_VERSION}|${rating}|${text.trim()}`));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}

@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { SystemQuality, ErrorCenter } from "@/components/ops-panels";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -47,20 +48,16 @@ function SettingsPage() {
   const sys = sysQ.data;
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [cur, setCur] = useState(""); const [pw, setPw] = useState("");
-  const [name, setName] = useState<string>((user.user_metadata?.["name"] as string) ?? "");
+  const [cur, setCur] = useState(""); const [pw, setPw] = useState(""); const [pw2, setPw2] = useState("");
   const [cfgOpen, setCfgOpen] = useState(false);
 
-  async function saveName() {
-    const { error } = await supabase.auth.updateUser({ data: { name } });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Name saved"); log({ data: { action: "settings.profile_updated" } }).then(() => auditQ.refetch());
-  }
   async function changePw(e: React.FormEvent) {
     e.preventDefault();
+    if (pw !== pw2) { toast.error("The new passwords don't match."); return; }
+    if (pw === cur) { toast.error("The new password must be different from the current one."); return; }
     const { error } = await supabase.auth.updateUser({ password: pw, current_password: cur } as any);
     if (error) { toast.error(error.message); return; }
-    toast.success("Password updated"); setCur(""); setPw("");
+    toast.success("Password updated"); setCur(""); setPw(""); setPw2("");
     log({ data: { action: "settings.password_changed" } }).then(() => auditQ.refetch());
   }
   async function logoutAll() {
@@ -76,7 +73,7 @@ function SettingsPage() {
       <PageHeader title="Settings" subtitle="Account, integrations and system health." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Account">
-          <div className="flex gap-2"><div className="flex-1 space-y-2"><Label htmlFor="admin-name">Admin name</Label><Input id="admin-name" value={name} onChange={(e) => setName(e.target.value)} /></div><Button className="self-end" variant="outline" onClick={saveName}>Save</Button></div>
+          <Row k="Name, photo and username" v={<Link to="/profile" className="text-brand hover:underline">Edit on Profile</Link>} />
           <Row k="Admin email" v={user.email} />
           <Row k="Domain" v={APP_DOMAIN} />
           <form onSubmit={changePw} className="space-y-3 border-t pt-4">
@@ -85,6 +82,8 @@ function SettingsPage() {
             <Input id="cur-pw" type="password" placeholder="Current password" value={cur} onChange={(e) => setCur(e.target.value)} required />
             <Label htmlFor="new-pw" className="sr-only">New password</Label>
             <Input id="new-pw" type="password" placeholder="New password (min 8)" minLength={8} value={pw} onChange={(e) => setPw(e.target.value)} required />
+            <Label htmlFor="new-pw2" className="sr-only">Confirm new password</Label>
+            <Input id="new-pw2" type="password" placeholder="Confirm new password" minLength={8} value={pw2} onChange={(e) => setPw2(e.target.value)} required />
             <Button type="submit" size="sm">Update password</Button>
           </form>
         </Card>
@@ -156,6 +155,8 @@ function SettingsPage() {
           </ol>
         </DialogContent>
       </Dialog>
+      <SystemQuality health={sys?.checks} />
+      <ErrorCenter />
     </>
   );
 }

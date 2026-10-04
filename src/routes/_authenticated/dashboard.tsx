@@ -1,3 +1,4 @@
+import { OperationsPanel } from "@/components/ops-panels";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -62,11 +63,11 @@ function Dashboard() {
                 <tbody>
                   {scans.slice(0, 6).map((s) => (
                     <tr key={s.id} className="border-t hover:bg-muted/50">
-                      <td className="px-5 py-3 font-medium">{s.business_name ?? <span className="text-muted-foreground">{s.source_url.slice(0, 40)}</span>}{s.is_seed && <DevTag />}</td>
+                      <td className="min-w-[180px] px-5 py-3 font-medium">{s.business_name ?? <span className="text-muted-foreground">{s.source_url.slice(0, 40)}</span>}{s.is_seed && <DevTag />}</td>
                       <td className="px-5 py-3">{s.rating != null ? <span className="flex items-center gap-1.5"><span className={`font-mono ${ratingTone(Number(s.rating))}`}>{Number(s.rating).toFixed(1)}</span><Stars value={Number(s.rating)} size={12} /></span> : "—"}</td>
                       <td className="px-5 py-3 font-mono">{s.reviews_retrieved}</td>
                       <td className="px-5 py-3">{s.status === "complete" ? <span className="flex items-center gap-2"><span className="font-mono">{riskyCount(s)}</span><RiskBadge risk={scanRisk(s)} /></span> : "—"}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{fmtDate(s.created_at)}</td>
+                      <td className="whitespace-nowrap px-5 py-3 text-muted-foreground">{fmtDate(s.created_at)}</td>
                       <td className="px-5 py-3"><StatusPill status={s.status} error={s.error} /></td>
                       <td className="px-5 py-3 text-right">{s.status === "complete" && <Link to="/reports/$id" params={{ id: s.id }} className="text-brand hover:underline">Open</Link>}</td>
                     </tr>
@@ -111,6 +112,7 @@ function Dashboard() {
           </section>
         </div>
       </div>
+      <OperationsPanel />
     </>
   );
 }

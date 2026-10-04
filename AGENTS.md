@@ -18,6 +18,8 @@
 - Scan pipeline lives in `src/lib/scan-core.server.ts`; server functions and `/api/*` REST routes both call it so logic is never duplicated.
 - REST routes (`src/routes/api/*`) use `src/lib/api.server.ts` (bearer auth via `guarded`, uniform `{ok,error:{code}}` errors); load it with dynamic import inside handlers.
 - VPS builds use `NITRO_PRESET=node-server` (Dockerfile); secrets live in untracked `.env.production`, never the repo `.env`.
+- Scan lifecycle is recorded in `scan_events`, failures in `error_events`, audit findings in `debug_findings` (written only by migrations); ops UI lives in `src/components/ops-panels.tsx` backed by `src/lib/ops.functions.ts` and is placed inside existing pages (no new sidebar items).
+- AI analysis: primary model + second-model verification for high/medium flags (never upgrades risk), evidence guard, and SHA-256 content-hash cache keyed by prompt + app version.
 - Canonical app URL comes from `VITE_PUBLIC_APP_URL` via `src/lib/config.ts`, so the domain can change without code edits.
 - Public sign-up is disabled (single admin); profile data lives in `profiles`, avatars in the private `avatars` bucket via signed URLs.
 - Bulk scans: `scan_batches` groups scans via `scans.batch_id`; the browser runs per-URL stages with concurrency 2 (no queue infra) to avoid flooding Google.
