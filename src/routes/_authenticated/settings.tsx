@@ -3,89 +3,157 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { RefreshCw, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getSystemStatus } from "@/lib/scan.functions";
+import { getSystemStatus, getAuditLog, logAudit } from "@/lib/scan.functions";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — Review & Rating Scanner" }, { name: "description", content: "Account, API and security settings." }] }),
+  head: () => ({ meta: [{ title: "Settings — Review & Rating Scanner" }, { name: "description", content: "Account, API, database and system health." }] }),
   component: SettingsPage,
 });
 
-function Dot({ ok, label }: { ok: boolean | undefined; label: string }) {
-  return (
-    <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold ${ok ? "bg-risk-normal-soft text-risk-normal" : ok === false ? "bg-risk-medium-soft text-risk-medium" : "bg-muted text-muted-foreground"}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-risk-normal" : ok === false ? "bg-risk-medium" : "bg-muted-foreground"}`} />{label}
-    </span>
-  );
+type H = "healthy" | "warning" | "unavailable";
+const hMeta: Record<H, [string, string, typeof CheckCircle2]> = {
+  healthy: ["Healthy", "bg-risk-normal-soft text-risk-normal", CheckCircle2],
+  warning: ["Warning", "bg-risk-medium-soft text-risk-medium", AlertTriangle],
+  unavailable: ["Unavailable", "bg-risk-high-soft text-risk-high", XCircle],
+};
+function HBadge({ s, label }: { s: H | undefined; label?: string }) {
+  if (!s) return <span className="text-xs text-muted-foreground">Checking…</span>;
+  const [l, cls, Icon] = hMeta[s];
+  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}><Icon className="h-3.5 w-3.5" aria-hidden />{label ?? l}</span>;
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="surface p-6"><h2 className="mb-5 font-semibold">{title}</h2><div className="space-y-4">{children}</div></section>;
 }
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
-  return <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="text-muted-foreground">{k}</span><span>{v}</span></div>;
+  return <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="text-muted-foreground">{k}</span><span className="text-right">{v}</span></div>;
 }
 
 function SettingsPage() {
   const { user } = Route.useRouteContext();
   const status = useServerFn(getSystemStatus);
-  const { data: sys, isLoading } = useQuery({ queryKey: ["system-status"], queryFn: () => status() });
+  const auditFn = useServerFn(getAuditLog);
+  const log = useServerFn(logAudit);
+  const sysQ = useQuery({ queryKey: ["system-status"], queryFn: () => status() });
+  const auditQ = useQuery({ queryKey: ["audit"], queryFn: () => auditFn() });
+  const sys = sysQ.data;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [cur, setCur] = useState(""); const [pw, setPw] = useState("");
   const [name, setName] = useState<string>((user.user_metadata?.["name"] as string) ?? "");
+  const [cfgOpen, setCfgOpen] = useState(false);
 
   async function saveName() {
     const { error } = await supabase.auth.updateUser({ data: { name } });
-    error ? toast.error(error.message) : toast.success("Name saved");
+    if (error) return toast.error(error.message);
+    toast.success("Name saved"); log({ data: { action: "settings.profile_updated" } }).then(() => auditQ.refetch());
   }
   async function changePw(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.auth.updateUser({ password: pw, current_password: cur } as any);
-    if (error) toast.error(error.message); else { toast.success("Password updated"); setCur(""); setPw(""); }
+    if (error) return toast.error(error.message);
+    toast.success("Password updated"); setCur(""); setPw("");
+    log({ data: { action: "settings.password_changed" } }).then(() => auditQ.refetch());
   }
   async function logoutAll() {
+    await log({ data: { action: "auth.logout_all" } }).catch(() => {});
     await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut({ scope: "global" });
     navigate({ to: "/auth", replace: true });
   }
+  const check = (n: string) => sys?.checks.find((c) => c.name === n);
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Account, integrations and security." />
+      <PageHeader title="Settings" subtitle="Account, integrations and system health." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Account">
-          <div className="flex gap-2"><div className="flex-1 space-y-2"><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div><Button className="self-end" variant="outline" onClick={saveName}>Save</Button></div>
-          <Row k="Email" v={user.email} />
+          <div className="flex gap-2"><div className="flex-1 space-y-2"><Label htmlFor="admin-name">Admin name</Label><Input id="admin-name" value={name} onChange={(e) => setName(e.target.value)} /></div><Button className="self-end" variant="outline" onClick={saveName}>Save</Button></div>
+          <Row k="Admin email" v={user.email} />
           <form onSubmit={changePw} className="space-y-3 border-t pt-4">
-            <Label>Change password</Label>
-            <Input type="password" placeholder="Current password" value={cur} onChange={(e) => setCur(e.target.value)} required />
-            <Input type="password" placeholder="New password (min 8)" minLength={8} value={pw} onChange={(e) => setPw(e.target.value)} required />
+            <div className="text-sm font-medium">Password</div>
+            <Label htmlFor="cur-pw" className="sr-only">Current password</Label>
+            <Input id="cur-pw" type="password" placeholder="Current password" value={cur} onChange={(e) => setCur(e.target.value)} required />
+            <Label htmlFor="new-pw" className="sr-only">New password</Label>
+            <Input id="new-pw" type="password" placeholder="New password (min 8)" minLength={8} value={pw} onChange={(e) => setPw(e.target.value)} required />
             <Button type="submit" size="sm">Update password</Button>
           </form>
         </Card>
+
         <Card title="Google API">
-          <Row k="Connection status" v={isLoading ? <Dot ok={undefined} label="Checking…" /> : <Dot ok={sys?.googleConfigured} label={sys?.googleConfigured ? "Connected" : "API key required"} />} />
-          <Row k="API" v="Places API (New) — official" />
-          <Row k="Review limit" v={`Up to ${sys?.reviewLimit ?? 5} reviews per business (Google limit)`} />
-          <Row k="Secure API configuration" v={<span className="font-mono text-xs">GOOGLE_PLACES_API_KEY · server-side only</span>} />
-          {!sys?.googleConfigured && <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">Create a key in Google Cloud Console with "Places API (New)" enabled, then ask the assistant to add it securely. Scans activate automatically.</p>}
+          <Row k="Service" v="Google Places API (New)" />
+          <Row k="Configuration status" v={sys ? <HBadge s={sys.googleConfigured ? "healthy" : "warning"} label={sys.googleConfigured ? "Configured" : "Configuration required"} /> : <HBadge s={undefined} />} />
+          <Row k="API key" v={<span className="font-mono text-xs">{sys?.googleConfigured ? "•••••••••••••••• (hidden)" : "Not set"}</span>} />
+          <Row k="API health" v={<HBadge s={check("Google API")?.status} />} />
+          <Row k="Review limit" v={`Up to ${sys?.reviewLimit ?? 5} reviews per business`} />
+          <Button variant="outline" onClick={() => setCfgOpen(true)}>Configure API</Button>
         </Card>
+
         <Card title="AI Analysis">
-          <Row k="Analysis status" v={<Dot ok={sys?.aiConfigured} label={sys?.aiConfigured ? "Active" : "Unavailable"} />} />
+          <Row k="AI provider" v={sys?.aiProvider ?? "—"} />
+          <Row k="AI status" v={<HBadge s={check("AI service")?.status} label={sys?.aiConfigured ? "Active" : undefined} />} />
           <Row k="Model" v={<span className="font-mono text-xs">{sys?.aiModel ?? "—"}</span>} />
-          <Row k="Preferences" v="Conservative — genuine negative experiences are not flagged" />
+          <Row k="Analysis settings" v="Conservative · negative ≠ violation · ambiguous → Requires review" />
         </Card>
-        <Card title="Security & System">
-          <Row k="Database" v={<Dot ok={sys?.databaseOk} label={sys?.databaseOk ? "Healthy" : "Checking…"} />} />
-          <Row k="Current session" v={user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : "Active"} />
+
+        <Card title="Database">
+          <Row k="Database status" v={<HBadge s={check("Database")?.status} />} />
+          <Row k="Migration status" v={sys ? <HBadge s={sys.migrationsOk ? "healthy" : "warning"} label={sys.migrationsOk ? "Up to date" : "Pending"} /> : <HBadge s={undefined} />} />
+          <Row k="Last backup" v="Automatic daily backups (managed by Lovable Cloud)" />
+          <Row k="Health" v={<span className="text-xs text-muted-foreground">{check("Database")?.detail ?? "—"}</span>} />
+        </Card>
+
+        <section className="surface p-6 lg:col-span-2">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold">System health</h2>
+              <p className="text-xs text-muted-foreground">Environment: {sys?.environment ?? "—"} · Version {sys?.version ?? "—"} · Checked {sys ? new Date(sys.checkedAt).toLocaleTimeString() : "—"}</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => sysQ.refetch()} disabled={sysQ.isFetching}><RefreshCw className={sysQ.isFetching ? "animate-spin" : ""} /> Run health check</Button>
+          </div>
+          {sysQ.isError && <p role="alert" className="mb-4 text-sm text-risk-high">Health check failed: the application server did not respond.</p>}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {(sys?.checks ?? []).map((c) => (
+              <div key={c.name} className="rounded-lg border p-4">
+                <div className="flex items-center justify-between gap-2"><span className="font-medium">{c.name}</span><HBadge s={c.status} /></div>
+                <p className="mt-2 text-xs text-muted-foreground">{c.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <Card title="Recent admin activity">
+          {(auditQ.data ?? []).length === 0 ? <p className="text-sm text-muted-foreground">No activity yet.</p> :
+            auditQ.data!.map((a, i) => <Row key={i} k={a.action} v={<span className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</span>} />)}
+        </Card>
+
+        <Card title="Security">
+          <Row k="Current session" v={user.last_sign_in_at ? `Signed in ${new Date(user.last_sign_in_at).toLocaleString()}` : "Active"} />
           <Button variant="outline" onClick={logoutAll}>Log out of all sessions</Button>
         </Card>
       </div>
+
+      <Dialog open={cfgOpen} onOpenChange={setCfgOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configure Google Places API</DialogTitle>
+            <DialogDescription>The key is stored securely on the server and is never shown in the browser.</DialogDescription>
+          </DialogHeader>
+          <ol className="list-decimal space-y-2 pl-5 text-sm">
+            <li>Open Google Cloud Console → APIs &amp; Services and enable <b>Places API (New)</b> (billing required).</li>
+            <li>Create an API key under Credentials. Restrict it to Places API (New). Set application restrictions to <b>None</b> or <b>IP addresses</b> — not websites.</li>
+            <li>Ask the assistant in the editor to add <span className="font-mono">GOOGLE_PLACES_API_KEY</span>. A secure form will appear for you to paste it.</li>
+            <li>Click <b>Run health check</b> — the status turns to Configured and live scanning starts automatically.</li>
+          </ol>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
