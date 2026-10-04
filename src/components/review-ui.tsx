@@ -1,3 +1,4 @@
+import { ReplyAssistant } from "@/components/reply-assistant";
 import { Star, ExternalLink, Flag, ShieldAlert, ShieldCheck, ShieldQuestion, FlaskConical, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GOOGLE_REPORT_URL, type AnalyzedReview, type Risk, type Scan, fmtDate, riskOf } from "@/lib/data";
@@ -144,6 +145,7 @@ export function ReviewDrawer({ review, scan, onClose }: { review: AnalyzedReview
                   </>
                 ) : <p className="text-sm text-muted-foreground">Not analyzed yet.</p>}
               </section>
+              {!scan?.is_seed && <ReplyAssistant reviewId={review.id} />}
               {!scan?.is_seed && (
                 <div className="flex flex-col gap-2">
                   {(review.review_uri || scan?.maps_uri) && (
