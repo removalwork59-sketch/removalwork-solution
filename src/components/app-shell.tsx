@@ -21,8 +21,8 @@ function Brand() {
         <Star className="h-4 w-4 text-star" fill="currentColor" strokeWidth={0} />
       </div>
       <div className="leading-tight">
-        <div className="text-sm font-bold tracking-tight">SEO Vale</div>
-        <div className="text-[11px] text-muted-foreground">Review Scanner</div>
+        <div className="text-sm font-bold tracking-tight">Review Scanner</div>
+        <div className="text-[11px] text-muted-foreground">Google review &amp; rating</div>
       </div>
     </div>
   );
@@ -106,4 +106,15 @@ export function EmptyState({ title, action }: { title: string; action?: ReactNod
       {action}
     </div>
   );
+}
+
+export function StatusPill({ status, error }: { status: string; error?: string | null }) {
+  const m: Record<string, [string, string]> = {
+    complete: ["Complete", "bg-risk-normal-soft text-risk-normal"],
+    failed: ["Failed", "bg-risk-high-soft text-risk-high"],
+    running: ["Running", "bg-brand-soft text-brand"],
+    pending: ["Pending", "bg-muted text-muted-foreground"],
+  };
+  const [label, cls] = m[status] ?? [status, "bg-muted text-muted-foreground"];
+  return <span title={error ?? undefined} className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
 }
