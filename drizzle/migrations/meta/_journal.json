@@ -36,6 +36,13 @@
       "when": 1791074608418,
       "tag": "0004_phase2_columns_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791075320491,
+      "tag": "0005_scan_batches",
+      "breakpoints": true
     }
   ]
 }

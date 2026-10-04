@@ -7,6 +7,7 @@ import { scanFetch, scanAnalyze, getSystemStatus } from "@/lib/scan.functions";
 import { scanQuery } from "@/lib/data";
 import { BusinessHeader, RatingAnalysis, RiskAnalysis } from "@/components/scan-result";
 import { Button } from "@/components/ui/button";
+import { BulkScan } from "@/components/bulk-scan";
 
 export const Route = createFileRoute("/_authenticated/scan")({
   head: () => ({ meta: [{ title: "New Scan — Review & Rating Scanner" }, { name: "description", content: "Scan a Google business for review policy risk." }] }),
@@ -30,6 +31,7 @@ function ScanPage() {
   const analyzeStage = useServerFn(scanAnalyze);
   const qc = useQueryClient();
   const { data: sys } = useQuery({ queryKey: ["system-status"], queryFn: () => status() });
+  const [mode, setMode] = useState<"single" | "bulk">("single");
   const [url, setUrl] = useState("");
   const [touched, setTouched] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -91,6 +93,13 @@ function ScanPage() {
             </div>
           )}
 
+          <div role="tablist" aria-label="Scan mode" className="mt-6 inline-flex rounded-full bg-card/10 p-1 text-sm ring-1 ring-primary-foreground/20">
+            {(["single", "bulk"] as const).map((m) => (
+              <button key={m} role="tab" type="button" aria-selected={mode === m} disabled={running} onClick={() => setMode(m)}
+                className={`rounded-full px-4 py-1.5 font-semibold ${mode === m ? "bg-card text-foreground" : "opacity-80"}`}>{m === "single" ? "Single URL" : "Bulk URLs"}</button>
+            ))}
+          </div>
+          {mode === "bulk" ? <BulkScan disabled={!!keyMissing} /> : <>
           <form onSubmit={start} noValidate className="mt-6 flex flex-col gap-3 rounded-2xl bg-card p-2 shadow-[var(--shadow-glow)] sm:flex-row">
             <label htmlFor="maps-url" className="sr-only">Google Maps or Business URL</label>
             <div className="flex flex-1 items-center gap-3 px-3">
@@ -107,8 +116,9 @@ function ScanPage() {
           <p id="url-help" className="mt-2 min-h-5 text-left text-xs" role="status">
             {touched && url && !urlValid ? <span className="text-star">Invalid Google URL — use a link like google.com/maps/place/… or maps.app.goo.gl/…</span> : <span className="opacity-60">Supports google.com/maps/place, maps.app.goo.gl, g.page and ?q=place_id links.</span>}
           </p>
+          </>}
 
-          {phase !== "idle" && (
+          {mode === "single" && phase !== "idle" && (
             <ol className="mt-6 grid gap-2 text-left sm:grid-cols-5" aria-label="Scan progress">
               {STEPS.map((s, i) => {
                 const st = stepState(i);
