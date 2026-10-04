@@ -21,3 +21,6 @@
 - [x] Dashboard mobile: Recent scans table min-width + horizontal scroll
 - [x] Mobile table scroll hint + keyboard accessibility (tabIndex, aria-label, focus ring)
 - [x] Automated smoke test: scripts/smoke_pages.py — open + refresh all 12 pages, catches blank screens (12/12 PASS)
+- [x] GitHub Actions smoke workflow: ADMIN_PASSWORD required secret (PR + deployment + live checks)
+- [x] Post-deploy smoke: after main push, live URL tested automatically; failure fails the deployment check
+- [ ] CI live checks will run once the GitHub repo is connected (user action: Plus menu → GitHub → Connect project)

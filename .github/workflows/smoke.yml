@@ -11,7 +11,7 @@ on:
         required: false
         type: string
       admin_password:
-        description: "Admin password for private pages (optional)"
+        description: "Admin password (optional here; falls back to the ADMIN_PASSWORD secret)"
         required: false
         type: string
 
@@ -21,6 +21,18 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      # ADMIN_PASSWORD is required so every PR/build also exercises the
+      # login-required pages (/dashboard, /scan, /history, /reports,
+      # /settings, /profile). Fail fast with a clear message if missing.
+      - name: Verify ADMIN_PASSWORD is configured
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$ADMIN_PASSWORD" ]; then
+            echo "::error::ADMIN_PASSWORD secret is not set. Add it in Repo Settings > Secrets and variables > Actions so login-required pages are tested."
+            exit 1
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,7 +48,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.base_url != ''
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
-          ADMIN_PASSWORD: ${{ github.event.inputs.admin_password }}
+          ADMIN_PASSWORD: ${{ github.event.inputs.admin_password || secrets.ADMIN_PASSWORD }}
         run: python3 scripts/smoke_pages.py
 
       - name: Set up Bun
@@ -65,7 +77,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.base_url == ''
         env:
           BASE_URL: http://localhost:8080
-          ADMIN_PASSWORD: ${{ github.event.inputs.admin_password || secrets.ADMIN_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: python3 scripts/smoke_pages.py
 
       - name: Upload dev server log on failure
@@ -75,3 +87,38 @@ jobs:
           name: dev-server-log
           path: dev-server.log
           if-no-files-found: ignore
+
+  # Runs after a successful main-branch build: smoke-tests the LIVE site and
+  # fails this "deployment check" if any page is blank or errors.
+  post-deploy-smoke:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify ADMIN_PASSWORD is configured
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$ADMIN_PASSWORD" ]; then
+            echo "::error::ADMIN_PASSWORD secret is not set. Add it in Repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Smoke test live site after deployment
+        env:
+          BASE_URL: ${{ vars.LIVE_URL || 'https://removalworksolution.online' }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: python3 scripts/smoke_pages.py
