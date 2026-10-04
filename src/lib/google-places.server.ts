@@ -25,6 +25,8 @@ export type PlaceResult = {
   rating: number | null;
   totalReviews: number | null;
   mapsUri: string | null;
+  latitude: number | null;
+  longitude: number | null;
   reviews: PlaceReview[];
 };
 
@@ -85,7 +87,7 @@ export function parseMapsUrl(raw: string): Parsed {
   return out;
 }
 
-const DETAILS_MASK = "id,displayName,formattedAddress,rating,userRatingCount,googleMapsUri,primaryTypeDisplayName,reviews";
+const DETAILS_MASK = "id,displayName,formattedAddress,rating,userRatingCount,googleMapsUri,primaryTypeDisplayName,reviews,location";
 
 export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Promise<PlaceResult> {
   let url = inputUrl.trim();
@@ -123,6 +125,8 @@ export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Pr
     rating: d.rating ?? null,
     totalReviews: d.userRatingCount ?? null,
     mapsUri: d.googleMapsUri ?? null,
+    latitude: d.location?.latitude ?? null,
+    longitude: d.location?.longitude ?? null,
     reviews,
   };
 }

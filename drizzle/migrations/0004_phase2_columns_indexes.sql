@@ -1,0 +1,15 @@
+ALTER TABLE public.scans ADD COLUMN IF NOT EXISTS started_at timestamptz DEFAULT now(), ADD COLUMN IF NOT EXISTS completed_at timestamptz;
+ALTER TABLE public.businesses ADD COLUMN IF NOT EXISTS latitude double precision, ADD COLUMN IF NOT EXISTS longitude double precision;
+ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS summary text, ADD COLUMN IF NOT EXISTS high_risk_count integer NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS medium_risk_count integer NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS normal_count integer NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS report_data jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.review_analyses ADD COLUMN IF NOT EXISTS analysis_provider text, ADD COLUMN IF NOT EXISTS analysis_version text;
+CREATE INDEX IF NOT EXISTS scans_user_id_idx ON public.scans(user_id);
+CREATE INDEX IF NOT EXISTS scans_business_id_idx ON public.scans(business_id);
+CREATE INDEX IF NOT EXISTS scans_created_at_idx ON public.scans(created_at DESC);
+CREATE INDEX IF NOT EXISTS businesses_place_id_idx ON public.businesses(place_id);
+CREATE INDEX IF NOT EXISTS reviews_scan_id_idx ON public.reviews(scan_id);
+CREATE INDEX IF NOT EXISTS review_analyses_scan_id_idx ON public.review_analyses(scan_id);
+CREATE INDEX IF NOT EXISTS review_analyses_review_id_idx ON public.review_analyses(review_id);
+CREATE INDEX IF NOT EXISTS review_analyses_risk_idx ON public.review_analyses(risk);
+CREATE INDEX IF NOT EXISTS reports_scan_id_idx ON public.reports(scan_id);
+CREATE INDEX IF NOT EXISTS reports_user_id_idx ON public.reports(user_id);
+CREATE INDEX IF NOT EXISTS reports_created_at_idx ON public.reports(created_at DESC);
