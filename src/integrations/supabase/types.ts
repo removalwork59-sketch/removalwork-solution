@@ -303,9 +303,34 @@ export type Database = {
           },
         ]
       }
+      scan_batches: {
+        Row: {
+          batch_number: number
+          created_at: string
+          id: string
+          total: number
+          user_id: string
+        }
+        Insert: {
+          batch_number?: number
+          created_at?: string
+          id?: string
+          total?: number
+          user_id?: string
+        }
+        Update: {
+          batch_number?: number
+          created_at?: string
+          id?: string
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       scans: {
         Row: {
           address: string | null
+          batch_id: string | null
           business_id: string | null
           business_name: string | null
           category: string | null
@@ -332,6 +357,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          batch_id?: string | null
           business_id?: string | null
           business_name?: string | null
           category?: string | null
@@ -358,6 +384,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          batch_id?: string | null
           business_id?: string | null
           business_name?: string | null
           category?: string | null
@@ -383,6 +410,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "scans_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "scan_batches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scans_business_id_fkey"
             columns: ["business_id"]
