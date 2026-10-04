@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { loadSiteContent } from "@/lib/site-content";
 
 export const Route = createFileRoute("/contact")({
-  loader: () => loadSiteContent({ data: { preview: false } } as never).catch(() => null),
+  loader: async () => {
+    try { return (await loadSiteContent("published")).content; } catch { return null; }
+  },
   head: () => ({
     meta: [
       { title: "Contact — Google Review & Rating Scanner" },
