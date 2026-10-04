@@ -18,3 +18,6 @@
 - [x] Public homepage + admin editor (Settings → Homepage content)
 - [x] Privacy Policy + Terms of Service pages (/privacy, /terms) with footer links editable in Settings
 - [ ] Logo/favicon/social preview image from user upload — blocked: user has not uploaded an image yet (only text files)
+- [x] Dashboard mobile: Recent scans table min-width + horizontal scroll
+- [x] Mobile table scroll hint + keyboard accessibility (tabIndex, aria-label, focus ring)
+- [ ] Automated smoke test: open + refresh all public and login-required pages, catch blank screens

@@ -81,6 +81,13 @@ function Dashboard() {
               </table>
             </div>
           )}
+          {scans.length > 0 && (
+            <div className="flex items-center justify-center gap-2 border-t px-5 py-2.5 text-xs text-muted-foreground sm:hidden" aria-hidden="true">
+              <span>←</span>
+              <span>Swipe to see all columns</span>
+              <span>→</span>
+            </div>
+          )}
         </section>
 
         <div className="space-y-6">
