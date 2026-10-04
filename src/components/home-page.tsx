@@ -61,7 +61,7 @@ function SectionHead({ eyebrow, title, body }: { eyebrow: string; title: string;
 export function HomePage({ c, preview }: { c: SiteContent; preview?: boolean }) {
   const faq = c.faq.filter((f) => f.visible);
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen overflow-x-clip bg-background text-foreground">
       {preview && <div className="bg-risk-medium/20 py-2 text-center text-sm font-medium">Draft preview — not yet published</div>}
       {c.announcement && <div className="bg-primary py-2 text-center text-sm text-primary-foreground">{c.announcement}</div>}
 
