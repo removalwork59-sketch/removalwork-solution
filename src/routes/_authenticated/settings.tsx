@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — SEO Vale" }, { name: "description", content: "Account, API and security settings." }] }),
+  head: () => ({ meta: [{ title: "Settings — Review & Rating Scanner" }, { name: "description", content: "Account, API and security settings." }] }),
   component: SettingsPage,
 });
 

@@ -6,7 +6,7 @@ import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/reports/")({
-  head: () => ({ meta: [{ title: "Reports — SEO Vale" }, { name: "description", content: "Google review risk evidence reports." }] }),
+  head: () => ({ meta: [{ title: "Reports — Review & Rating Scanner" }, { name: "description", content: "Google review risk evidence reports." }] }),
   component: ReportsPage,
 });
 

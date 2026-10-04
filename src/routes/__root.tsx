@@ -55,9 +55,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SEO Vale — Google Review Scanner" },
+      { title: "Review & Rating Scanner — Google review risk analysis" },
       { name: "description", content: "Scan, analyze and report potentially problematic Google reviews." },
-      { property: "og:title", content: "SEO Vale — Google Review Scanner" },
+      { property: "og:title", content: "Review & Rating Scanner — Google review risk analysis" },
       { property: "og:description", content: "Scan, analyze and report potentially problematic Google reviews." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

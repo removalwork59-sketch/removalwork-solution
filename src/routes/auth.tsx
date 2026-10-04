@@ -10,10 +10,10 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — SEO Vale Review Scanner" },
-      { name: "description", content: "Admin sign in for the SEO Vale Google Review Scanner." },
-      { property: "og:title", content: "Sign in — SEO Vale Review Scanner" },
-      { property: "og:description", content: "Admin sign in for the SEO Vale Google Review Scanner." },
+      { title: "Sign in — Review & Rating Scanner" },
+      { name: "description", content: "Admin sign in for the Google Review & Rating Scanner." },
+      { property: "og:title", content: "Sign in — Review & Rating Scanner" },
+      { property: "og:description", content: "Admin sign in for the Google Review & Rating Scanner." },
     ],
   }),
   component: AuthPage,
@@ -51,7 +51,7 @@ function AuthPage() {
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="bg-scanner relative hidden overflow-hidden p-12 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
         <div className="grid-lines absolute inset-0" />
-        <div className="relative flex items-center gap-2 font-bold"><Star className="h-5 w-5 text-star" fill="currentColor" strokeWidth={0} /> SEO Vale</div>
+        <div className="relative flex items-center gap-2 font-bold"><Star className="h-5 w-5 text-star" fill="currentColor" strokeWidth={0} /> Review & Rating Scanner</div>
         <div className="relative">
           <h1 className="text-4xl font-bold leading-tight tracking-tight">Google review intelligence,<br />without the noise.</h1>
           <p className="mt-4 max-w-md opacity-75">Paste a Maps link. Get rating, review risk classification and an evidence report ready for Google's official reporting path.</p>
