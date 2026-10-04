@@ -124,7 +124,7 @@ export function ActionCenter() {
             <div className="mt-2 text-sm text-muted-foreground">{r.reviewer} · {r.reviewRating}★ {r.category && <>· {r.category}</>}</div>
             <p className="mt-2 text-sm">“{r.text || "(no text)"}”</p>
             <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-              <div><div className="text-xs font-semibold uppercase text-muted-foreground">{rec.kind}</div><p className="mt-1">{r.reason}</p>{r.evidence && <p className="mt-1 text-muted-foreground">Evidence: “{r.evidence}”</p>}<p className="mt-1 text-xs text-muted-foreground">{rec.why}</p></div>
+              <div><div className="text-xs font-semibold uppercase text-muted-foreground">{rec.kind}</div><p className="mt-1">{r.reason}</p>{r.evidence && <p className="mt-1 text-muted-foreground">Evidence: {r.evidence}</p>}<p className="mt-1 text-xs text-muted-foreground">{rec.why}</p></div>
               <div><div className="text-xs font-semibold uppercase text-muted-foreground">Recommended next action</div><p className="mt-1">{rec.next}</p>
                 <div className="mt-2"><Confidence value={r.confidence} /></div>
                 {v && <p className="mt-1 text-xs text-muted-foreground">Second model ({v.model}): {v.error ? `not available — ${v.error}` : v.agrees ? "agrees" : `disagrees — ${v.reason}`}</p>}
