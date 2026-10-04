@@ -5,6 +5,7 @@ import { scansQuery, fmtDate, reportNumber, riskyCount } from "@/lib/data";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { DevTag } from "@/components/review-ui";
 import { Button } from "@/components/ui/button";
+import { BatchInsightsPanel } from "@/components/batch-insights";
 
 export const Route = createFileRoute("/_authenticated/reports/")({
   head: () => ({ meta: [{ title: "Reports — Review & Rating Scanner" }, { name: "description", content: "Google review risk evidence reports." }] }),
@@ -17,6 +18,7 @@ function ReportsPage() {
   return (
     <>
       <PageHeader title="Reports" subtitle="Evidence reports generated from completed scans." />
+      <BatchInsightsPanel />
       {!isLoading && reports.length === 0 ? <EmptyState title="No reports generated." /> : (
         <div className="surface overflow-x-auto">
           <table className="w-full text-sm">
