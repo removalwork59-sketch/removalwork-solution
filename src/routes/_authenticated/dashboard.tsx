@@ -55,7 +55,12 @@ function Dashboard() {
           {!isLoading && scans.length === 0 ? (
             <div className="p-6"><EmptyState title="No scans yet." action={<Button asChild><Link to="/scan">Start first scan</Link></Button>} /></div>
           ) : (
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+              tabIndex={0}
+              role="region"
+              aria-label="Recent scans table — horizontally scrollable"
+            >
               <table className="w-full min-w-[680px] text-sm">
                 <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>{["Business", "Google Rating", "Reviews Retrieved", "Risky Reviews", "Scan Date", "Status", ""].map((h, i) => <th key={i} className="px-5 py-3 font-medium">{h}</th>)}</tr>
