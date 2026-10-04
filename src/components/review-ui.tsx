@@ -1,3 +1,4 @@
+import { ReplyAssistant } from "@/components/reply-assistant";
 import { Star, ExternalLink, Flag, ShieldAlert, ShieldCheck, ShieldQuestion, FlaskConical, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GOOGLE_REPORT_URL, type AnalyzedReview, type Risk, type Scan, fmtDate, riskOf } from "@/lib/data";
