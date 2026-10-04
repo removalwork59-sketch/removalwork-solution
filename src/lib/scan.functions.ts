@@ -17,7 +17,7 @@ export const getSystemStatus = createServerFn({ method: "GET" })
     const tables = await Promise.all(["businesses", "review_analyses", "reports", "audit_log"].map((t) =>
       context.supabase.from(t as "reports").select("id", { head: true, count: "exact" })));
     const migrationsOk = tables.every((r) => !r.error);
-    const googleConfigured = Boolean(process.env["GOOGLE_PLACES_API_KEY"]);
+    const googleConfigured = Boolean((process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_MAPS_API_KEY"]));
     const aiConfigured = Boolean(process.env["LOVABLE_API_KEY"]);
     const checks: { name: string; status: Health; detail: string }[] = [
       { name: "Application", status: "healthy", detail: `Version ${APP_VERSION} responding` },
@@ -52,18 +52,18 @@ function validGoogleUrl(raw: string) {
 /** Stage 1: resolve business, read public place data, retrieve available reviews. */
 export const scanFetch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ url: z.string().trim().min(5).max(2000) }).parse(d))
+  .inputValidator((d) => z.object({ url: z.string().trim().min(5).max(2000), batchId: z.string().uuid().optional() }).parse(d))
   .handler(async ({ data, context }): Promise<StageResponse> => {
     const { supabase, userId } = context;
     if (!validGoogleUrl(data.url)) return { ok: false, code: "INVALID_URL", message: "This isn't a Google Maps or Business link. Paste a link like google.com/maps/place/… or maps.app.goo.gl/…" };
-    const googleKey = process.env["GOOGLE_PLACES_API_KEY"];
+    const googleKey = (process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_MAPS_API_KEY"]);
     if (!googleKey) return { ok: false, code: "API_KEY_REQUIRED", message: "Google Places API is not configured. Add the API key in Settings." };
 
     const since = new Date(Date.now() - 2 * 60_000).toISOString();
     const { data: dup } = await supabase.from("scans").select("id").eq("user_id", userId).eq("source_url", data.url).eq("status", "running").gte("created_at", since).limit(1);
     if (dup?.length) return { ok: false, code: "SCAN_IN_PROGRESS", message: "A scan for this link is already running. Please wait for it to finish.", scanId: dup[0]!.id };
     const { data: scan, error } = await supabase.from("scans")
-      .insert({ user_id: userId, source_url: data.url, status: "running", stage: "fetch", data_source: "google_places" })
+      .insert({ user_id: userId, source_url: data.url, status: "running", stage: "fetch", data_source: "google_places", batch_id: data.batchId ?? null })
       .select("id").single();
     if (error || !scan) return { ok: false, code: "DB_UNAVAILABLE", message: "Database unavailable — the scan could not be saved." };
     await audit(supabase, userId, "scan.started", { scan_id: scan.id, url: data.url });
@@ -157,4 +157,14 @@ export const getAuditLog = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase.from("audit_log").select("action, created_at").order("created_at", { ascending: false }).limit(8);
     return data ?? [];
+  });
+
+export const createBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ total: z.number().int().min(1).max(500) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: b, error } = await context.supabase.from("scan_batches").insert({ user_id: context.userId, total: data.total }).select("id, batch_number").single();
+    if (error || !b) throw new Error("Database unavailable — batch could not be created.");
+    await audit(context.supabase, context.userId, "batch.started", { batch_id: b.id, total: data.total });
+    return b;
   });
