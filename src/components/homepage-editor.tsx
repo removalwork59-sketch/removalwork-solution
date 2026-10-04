@@ -38,9 +38,9 @@ export function HomepageEditor() {
     if (publish) { patch.published = c; patch.published_at = new Date().toISOString(); }
     const { error } = await supabase.from("site_content").update(patch).eq("id", "home");
     setBusy(false);
-    if (error) return toast.error(`Could not save: ${error.message}`);
+    if (error) { toast.error(`Could not save: ${error.message}`); return; }
     const { data: u } = await supabase.auth.getUser();
-    await supabase.from("audit_log").insert({ user_id: u.user?.id, action: publish ? "homepage.published" : "homepage.draft_saved", detail: {} });
+    await supabase.from("audit_log").insert({ user_id: u.user!.id, action: publish ? "homepage.published" : "homepage.draft_saved", detail: {} });
     setDirty(false); setHasDraft(!publish);
     if (publish) setPublishedAt(patch.published_at);
     toast.success(publish ? "Homepage published" : "Draft saved");
