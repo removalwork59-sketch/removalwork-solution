@@ -14,7 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      reviews: {
+        Row: {
+          author: string
+          author_uri: string | null
+          confidence: number
+          created_at: string
+          evidence: string | null
+          id: string
+          indicators: string[]
+          policy_category: string | null
+          published_at: string | null
+          rating: number
+          reason: string | null
+          relative_time: string | null
+          review_uri: string | null
+          risk: string
+          scan_id: string
+          text: string | null
+        }
+        Insert: {
+          author?: string
+          author_uri?: string | null
+          confidence?: number
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          indicators?: string[]
+          policy_category?: string | null
+          published_at?: string | null
+          rating: number
+          reason?: string | null
+          relative_time?: string | null
+          review_uri?: string | null
+          risk?: string
+          scan_id: string
+          text?: string | null
+        }
+        Update: {
+          author?: string
+          author_uri?: string | null
+          confidence?: number
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          indicators?: string[]
+          policy_category?: string | null
+          published_at?: string | null
+          rating?: number
+          reason?: string | null
+          relative_time?: string | null
+          review_uri?: string | null
+          risk?: string
+          scan_id?: string
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scans: {
+        Row: {
+          address: string | null
+          business_name: string | null
+          category: string | null
+          created_at: string
+          data_source: string
+          error: string | null
+          high_count: number
+          id: string
+          is_seed: boolean
+          maps_uri: string | null
+          medium_count: number
+          normal_count: number
+          place_id: string | null
+          rating: number | null
+          source_url: string
+          status: string
+          total_reviews: number | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_name?: string | null
+          category?: string | null
+          created_at?: string
+          data_source?: string
+          error?: string | null
+          high_count?: number
+          id?: string
+          is_seed?: boolean
+          maps_uri?: string | null
+          medium_count?: number
+          normal_count?: number
+          place_id?: string | null
+          rating?: number | null
+          source_url: string
+          status?: string
+          total_reviews?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_name?: string | null
+          category?: string | null
+          created_at?: string
+          data_source?: string
+          error?: string | null
+          high_count?: number
+          id?: string
+          is_seed?: boolean
+          maps_uri?: string | null
+          medium_count?: number
+          normal_count?: number
+          place_id?: string | null
+          rating?: number | null
+          source_url?: string
+          status?: string
+          total_reviews?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
