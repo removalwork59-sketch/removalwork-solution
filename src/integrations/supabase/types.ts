@@ -676,6 +676,30 @@ export type Database = {
           },
         ]
       }
+      site_content: {
+        Row: {
+          draft: Json
+          id: string
+          published: Json
+          published_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          draft?: Json
+          id?: string
+          published?: Json
+          published_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          draft?: Json
+          id?: string
+          published?: Json
+          published_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

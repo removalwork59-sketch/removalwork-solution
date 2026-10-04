@@ -175,6 +175,8 @@
 @keyframes scan-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 oklch(0.58 0.19 258 / 0.5); } 100% { box-shadow: 0 0 0 10px oklch(0.58 0.19 258 / 0); } }
+@keyframes scan { 0% { top: -4rem; } 100% { top: 100%; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
 .animate-sweep { animation: scan-sweep 1.6s ease-in-out infinite; }
 .animate-rise { animation: rise 0.45s ease both; }
 .animate-pulse-ring { animation: pulse-ring 1.4s ease-out infinite; }

@@ -1,4 +1,5 @@
 import { SystemQuality, ErrorCenter } from "@/components/ops-panels";
+import { HomepageEditor } from "@/components/homepage-editor";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -155,6 +156,10 @@ function SettingsPage() {
           </ol>
         </DialogContent>
       </Dialog>
+      <section className="surface mt-6 p-5">
+        <h2 className="mb-4 text-lg font-semibold">Homepage content</h2>
+        <HomepageEditor />
+      </section>
       <SystemQuality health={sys?.checks} />
       <ErrorCenter />
     </>
