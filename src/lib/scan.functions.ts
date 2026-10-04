@@ -59,6 +59,9 @@ export const scanFetch = createServerFn({ method: "POST" })
     const googleKey = process.env["GOOGLE_PLACES_API_KEY"];
     if (!googleKey) return { ok: false, code: "API_KEY_REQUIRED", message: "Google Places API is not configured. Add the API key in Settings." };
 
+    const since = new Date(Date.now() - 2 * 60_000).toISOString();
+    const { data: dup } = await supabase.from("scans").select("id").eq("user_id", userId).eq("source_url", data.url).eq("status", "running").gte("created_at", since).limit(1);
+    if (dup?.length) return { ok: false, code: "SCAN_IN_PROGRESS", message: "A scan for this link is already running. Please wait for it to finish.", scanId: dup[0]!.id };
     const { data: scan, error } = await supabase.from("scans")
       .insert({ user_id: userId, source_url: data.url, status: "running", stage: "fetch", data_source: "google_places" })
       .select("id").single();
@@ -69,7 +72,7 @@ export const scanFetch = createServerFn({ method: "POST" })
       const place = await resolveAndFetchPlace(googleKey, data.url);
       const biz = await supabase.from("businesses").upsert({
         user_id: userId, place_id: place.placeId, name: place.name, category: place.category, address: place.address,
-        rating: place.rating, total_reviews: place.totalReviews, maps_uri: place.mapsUri, updated_at: new Date().toISOString(),
+        rating: place.rating, total_reviews: place.totalReviews, maps_uri: place.mapsUri, latitude: place.latitude, longitude: place.longitude, updated_at: new Date().toISOString(),
       }, { onConflict: "user_id,place_id" }).select("id").single();
       if (biz.error) throw new ScanError("DB_UNAVAILABLE", "Database unavailable — business could not be saved.");
 
@@ -109,18 +112,21 @@ export const scanAnalyze = createServerFn({ method: "POST" })
       const analysis = await analyzeReviews(aiKey, scan.business_name ?? "", scan.category, reviews.map((r) => ({
         author: r.author, authorUri: r.author_uri, rating: r.rating, publishedAt: r.published_at, relativeTime: r.relative_time, text: r.text ?? "", reviewUri: r.review_uri,
       })));
-      const ins = await supabase.from("review_analyses").insert(reviews.map((r, i) => ({ review_id: r.id, scan_id: scan.id, model: ANALYSIS_MODEL, ...analysis[i]! })));
+      const ins = await supabase.from("review_analyses").insert(reviews.map((r, i) => ({ review_id: r.id, scan_id: scan.id, model: ANALYSIS_MODEL, analysis_provider: AI_PROVIDER, analysis_version: APP_VERSION, ...analysis[i]! })));
       if (ins.error) throw new ScanError("DB_UNAVAILABLE", "Database unavailable — analysis could not be saved.");
       const n = (k: string) => analysis.filter((a) => a.risk === k).length;
       const high = n("high"), medium = n("medium");
       await supabase.from("scans").update({
-        status: "complete", stage: "done", high_count: high, medium_count: medium, normal_count: n("normal"), requires_review_count: n("requires_review"),
+        status: "complete", stage: "done", high_count: high, medium_count: medium, normal_count: n("normal"), requires_review_count: n("requires_review"), completed_at: new Date().toISOString(),
       }).eq("id", scan.id);
       const recommended = high + medium > 0
         ? `Review the ${high + medium} flagged review(s) and, where you believe Google policy is violated, report each one through the official Google reporting path with the evidence below.`
         : "No potentially risky reviews detected among the available reviews. No reporting action recommended.";
       await supabase.from("reports").insert({
         scan_id: scan.id, user_id: userId, report_number: "RPT-" + scan.id.replace(/-/g, "").slice(0, 8).toUpperCase(), recommended_action: recommended,
+        summary: `${reviews.length} available review(s) analyzed: ${high} high, ${medium} medium, ${n("normal")} normal, ${n("requires_review")} requires review.`,
+        high_risk_count: high, medium_risk_count: medium, normal_count: n("normal"),
+        report_data: { business: scan.business_name, rating: scan.rating, total_reviews: scan.total_reviews, reviews_retrieved: reviews.length, analysis_version: APP_VERSION, model: ANALYSIS_MODEL },
       });
       await audit(supabase, userId, "scan.completed", { scan_id: scan.id, high, medium });
       return { ok: true, scanId: scan.id, reviews: reviews.length };
@@ -133,7 +139,7 @@ async function fail(supabase: any, userId: string, scanId: string, e: unknown): 
   const code = e instanceof ScanError ? e.code : "UNKNOWN";
   const message = e instanceof Error ? e.message : "Unexpected error.";
   console.error("scan failed", code, message);
-  await supabase.from("scans").update({ status: "failed", error: message }).eq("id", scanId);
+  await supabase.from("scans").update({ status: "failed", error: message, completed_at: new Date().toISOString() }).eq("id", scanId);
   await audit(supabase, userId, "scan.failed", { scan_id: scanId, code });
   return { ok: false, code, message, scanId };
 }
