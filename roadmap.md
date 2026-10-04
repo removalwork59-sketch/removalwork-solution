@@ -24,3 +24,5 @@
 - [x] GitHub Actions smoke workflow: ADMIN_PASSWORD required secret (PR + deployment + live checks)
 - [x] Post-deploy smoke: after main push, live URL tested automatically; failure fails the deployment check
 - [ ] CI live checks will run once the GitHub repo is connected (user action: Plus menu → GitHub → Connect project)
+- [ ] Auth flow automated tests (login/logout/session-expiry) — in progress
+- [ ] Smoke workflow: failure artifacts (screenshots + console errors) — in progress
