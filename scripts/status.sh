@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-cd "$(dirname "$0")/.."; docker compose ps
+cd "$(dirname "$0")/.."; docker compose --env-file .env.production ps
