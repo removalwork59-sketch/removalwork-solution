@@ -65,11 +65,11 @@ export function HomepageEditor() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <T k="heroTitle" label="Hero headline" /><T k="announcement" label="Announcement banner (empty = hidden)" />
-        <T k="heroSubtitle" label="Hero subtitle" area /><T k="trustStatement" label="Trust statement" area />
-        <T k="ctaPrimary" label="Primary button" /><T k="ctaSecondary" label="Secondary button" />
-        <T k="seoTitle" label="SEO title" /><T k="contactEmail" label="Contact email" />
-        <T k="seoDescription" label="SEO description" area /><T k="footerTagline" label="Footer text" area />
+        {T({ k: "heroTitle", label: "Hero headline" })}{T({ k: "announcement", label: "Announcement banner (empty = hidden)" })}
+        {T({ k: "heroSubtitle", label: "Hero subtitle", area: true })}{T({ k: "trustStatement", label: "Trust statement", area: true })}
+        {T({ k: "ctaPrimary", label: "Primary button" })}{T({ k: "ctaSecondary", label: "Secondary button" })}
+        {T({ k: "seoTitle", label: "SEO title" })}{T({ k: "contactEmail", label: "Contact email" })}
+        {T({ k: "seoDescription", label: "SEO description", area: true })}{T({ k: "footerTagline", label: "Footer text", area: true })}
       </div>
 
       <div><h4 className="mb-2 text-sm font-semibold">Sections shown</h4>
