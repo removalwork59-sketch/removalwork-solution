@@ -105,3 +105,56 @@ export function parseCsvUrls(csv: string): string[] {
   if (idx === -1) throw new Error("CSV must have a google_url column.");
   return lines.slice(1).map((l) => (l.split(",")[idx] ?? "").trim().replace(/^"|"$/g, ""));
 }
+
+type Ctx = { supabase: Db; userId: string; email: string | null; token: string };
+/** Run an authenticated handler with uniform error handling. */
+export async function guarded(request: Request, fn: (ctx: Ctx) => Promise<Response>): Promise<Response> {
+  try {
+    const a = await auth(request);
+    if (a instanceof Response) return a;
+    if (rateLimited(`u:${a.userId}`, 120, 60_000)) return err("RATE_LIMITED", "Too many requests. Slow down and try again in a minute.");
+    return await fn(a);
+  } catch (e) {
+    console.error("api error", e);
+    return err("INTERNAL_ERROR", "Something went wrong on the server.");
+  }
+}
+
+/** Full report payload built from stored scan, review and analysis rows. */
+export async function buildReport(supabase: Db, scanId: string) {
+  const { data: scan, error } = await supabase.from("scans").select("*").eq("id", scanId).maybeSingle();
+  if (error) throw new Error("DATABASE_ERROR");
+  if (!scan) return null;
+  const [{ data: reviews }, { data: analyses }, { data: report }] = await Promise.all([
+    supabase.from("reviews").select("*").eq("scan_id", scanId).order("created_at"),
+    supabase.from("review_analyses").select("*").eq("scan_id", scanId),
+    supabase.from("reports").select("*").eq("scan_id", scanId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  const byReview = new Map((analyses ?? []).map((a) => [a.review_id, a]));
+  const items = (reviews ?? []).map((r) => {
+    const a = byReview.get(r.id);
+    return {
+      id: r.id, author: r.author, rating: r.rating, published_at: r.published_at, text: r.text, google_review_link: r.review_uri,
+      risk: a?.risk ?? r.risk, category: a?.category ?? r.policy_category, reason: a?.reason ?? r.reason,
+      evidence: a?.evidence ?? r.evidence, confidence: a?.confidence ?? r.confidence, signals: a?.signals ?? r.indicators,
+    };
+  });
+  const flagged = items.filter((i) => i.risk === "high" || i.risk === "medium");
+  return {
+    data_label: scan.is_seed ? "Development data — not live Google data" : "Live Google Places data",
+    report_number: report?.report_number ?? null,
+    generated_at: report?.created_at ?? null,
+    status: scan.status,
+    business: { name: scan.business_name, category: scan.category, address: scan.address, google_maps_link: scan.maps_uri },
+    rating: scan.rating, review_count: scan.total_reviews,
+    reviews_retrieved: scan.reviews_retrieved, reviews_analyzed: analyses?.length ?? 0,
+    risk_summary: { high: scan.high_count, medium: scan.medium_count, normal: scan.normal_count, requires_review: scan.requires_review_count },
+    summary: report?.summary ?? null, recommended_action: report?.recommended_action ?? null,
+    flagged_reviews: flagged, reviews: items,
+    official_google_reporting: {
+      help: "https://support.google.com/business/answer/4596773",
+      note: "External action. This report has not been submitted to Google and does not mean Google removed any review.",
+    },
+    note: "Google returns a limited number of available reviews per business (up to 5).",
+  };
+}
