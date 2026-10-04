@@ -144,6 +144,7 @@ export function ReviewDrawer({ review, scan, onClose }: { review: AnalyzedReview
                   </>
                 ) : <p className="text-sm text-muted-foreground">Not analyzed yet.</p>}
               </section>
+              {!scan?.is_seed && <ReplyAssistant reviewId={review.id} />}
               {!scan?.is_seed && (
                 <div className="flex flex-col gap-2">
                   {(review.review_uri || scan?.maps_uri) && (
