@@ -15,3 +15,4 @@
 
 - [x] Vala AI reply assistant (tones, editable draft, copy) in review panel
 - [ ] Send Report to client by email — blocked: needs sender email domain setup (user decision)
+- [x] Public homepage + admin editor (Settings → Homepage content)
