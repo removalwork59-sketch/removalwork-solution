@@ -1,0 +1,77 @@
+name: Smoke Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Live URL to test (e.g. https://removalworksolution.online). Leave empty to test a local build."
+        required: false
+        type: string
+      admin_password:
+        description: "Admin password for private pages (optional)"
+        required: false
+        type: string
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Test against live URL
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.base_url != ''
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url }}
+          ADMIN_PASSWORD: ${{ github.event.inputs.admin_password }}
+        run: python3 scripts/smoke_pages.py
+
+      - name: Set up Bun
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.base_url == ''
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.base_url == ''
+        run: bun install --frozen-lockfile
+
+      - name: Start dev server
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.base_url == ''
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID }}
+        run: |
+          nohup bun run dev --port 8080 > dev-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:8080/ && break
+            sleep 2
+          done
+          curl -sf -o /dev/null http://localhost:8080/
+
+      - name: Run smoke test (local build)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.base_url == ''
+        env:
+          BASE_URL: http://localhost:8080
+          ADMIN_PASSWORD: ${{ github.event.inputs.admin_password || secrets.ADMIN_PASSWORD }}
+        run: python3 scripts/smoke_pages.py
+
+      - name: Upload dev server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-server-log
+          path: dev-server.log
+          if-no-files-found: ignore
