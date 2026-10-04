@@ -16,5 +16,5 @@
 - [x] Vala AI reply assistant (tones, editable draft, copy) in review panel
 - [ ] Send Report to client by email — blocked: needs sender email domain setup (user decision)
 - [x] Public homepage + admin editor (Settings → Homepage content)
-- [ ] Privacy Policy + Terms of Service pages (/privacy, /terms) with footer links editable in Settings
+- [x] Privacy Policy + Terms of Service pages (/privacy, /terms) with footer links editable in Settings
 - [ ] Logo/favicon/social preview image from user upload — blocked: user has not uploaded an image yet (only text files)
