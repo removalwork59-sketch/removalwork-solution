@@ -50,8 +50,8 @@ export const DEFAULT_CONTENT: SiteContent = {
   footerTagline: "Google review intelligence and policy-aligned risk analysis.",
   contactEmail: "removalwork59@gmail.com",
   footerLinks: [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
     { label: "Responsible Use", href: "#responsible" },
   ],
   socialLinks: [],
