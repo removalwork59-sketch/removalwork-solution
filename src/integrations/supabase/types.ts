@@ -83,6 +83,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_path: string | null
+          created_at: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_path?: string | null
+          created_at?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_path?: string | null
+          created_at?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           created_at: string
