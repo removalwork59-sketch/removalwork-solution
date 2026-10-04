@@ -50,9 +50,13 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-card-border: var(--card-border);
+  --color-scanner-accent: var(--scanner-accent);
+  --color-scanner-deep: var(--scanner-deep);
+  --color-scanner-surface: var(--scanner-surface);
   --shadow-soft: 0 1px 2px oklch(0.25 0.05 260 / 0.06), 0 10px 28px -10px oklch(0.25 0.06 260 / 0.14), inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent);
   --shadow-lift: 0 2px 6px oklch(0.25 0.05 260 / 0.08), 0 24px 48px -14px oklch(0.25 0.07 260 / 0.24), inset 0 1px 0 color-mix(in oklab, var(--foreground) 10%, transparent);
   --shadow-glow: 0 0 0 1px oklch(0.58 0.19 258 / 0.25), 0 12px 40px -8px oklch(0.58 0.19 258 / 0.35);
+  --shadow-scanner-glow: 0 0 0 1px oklch(0.66 0.125 156 / 0.22), 0 12px 40px -8px oklch(0.46 0.098 158 / 0.22);
   --shadow-btn: inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 -2px 3px oklch(0.1 0.03 262 / 0.22), 0 1px 2px oklch(0.2 0.05 260 / 0.25), 0 8px 18px -8px oklch(0.3 0.1 260 / 0.4);
   --shadow-btn-active: inset 0 2px 5px oklch(0.1 0.03 262 / 0.35), 0 1px 2px oklch(0.2 0.05 260 / 0.15);
 }
@@ -96,6 +100,9 @@
   --sidebar-border: oklch(0.92 0.02 152);
   --sidebar-ring: oklch(0.58 0.19 258);
   --card-border: oklch(0.9 0.05 155);
+  --scanner-accent: oklch(0.66 0.125 156);
+  --scanner-deep: oklch(0.46 0.098 158);
+  --scanner-surface: oklch(0.978 0.008 165);
 }
 
 .dark {
@@ -136,8 +143,12 @@
   --sidebar-border: oklch(0.31 0.008 258);
   --sidebar-ring: oklch(0.68 0.13 258);
   --card-border: oklch(0.36 0.012 250);
+  --scanner-accent: oklch(0.74 0.11 156);
+  --scanner-deep: oklch(0.55 0.095 157);
+  --scanner-surface: oklch(0.3 0.015 160);
   --shadow-soft: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 6px 18px -8px oklch(0 0 0 / 0.35);
   --shadow-lift: 0 1px 0 oklch(1 0 0 / 0.05) inset, 0 14px 30px -12px oklch(0 0 0 / 0.45);
+  --shadow-scanner-glow: 0 0 0 1px oklch(0.74 0.11 156 / 0.25), 0 12px 40px -8px oklch(0 0 0 / 0.5);
 }
 
 @layer base {
@@ -170,6 +181,31 @@
   background-image:
     linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px),
     linear-gradient(90deg, oklch(1 0 0 / 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+@utility bg-scanner-green {
+  background:
+    radial-gradient(110% 85% at 100% 0%, oklch(0.66 0.125 156 / 0.16), transparent 55%),
+    radial-gradient(85% 70% at 0% 100%, oklch(0.46 0.098 158 / 0.12), transparent 60%),
+    radial-gradient(70% 60% at 30% 120%, oklch(0.9 0.05 160 / 0.45), transparent 70%),
+    linear-gradient(165deg, oklch(0.962 0.024 163), oklch(0.932 0.036 162));
+}
+@utility grid-lines-green {
+  background-image:
+    linear-gradient(oklch(0.46 0.098 158 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.46 0.098 158 / 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.dark .bg-scanner-green {
+  background:
+    radial-gradient(110% 85% at 100% 0%, oklch(0.74 0.11 156 / 0.14), transparent 55%),
+    radial-gradient(85% 70% at 0% 100%, oklch(0.55 0.095 157 / 0.18), transparent 60%),
+    linear-gradient(165deg, oklch(0.25 0.03 160), oklch(0.2 0.025 158));
+}
+.dark .grid-lines-green {
+  background-image:
+    linear-gradient(oklch(1 0 0 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.045) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 @utility tabular { font-variant-numeric: tabular-nums; }

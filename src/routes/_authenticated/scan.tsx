@@ -79,28 +79,28 @@ function ScanPage() {
 
   return (
     <>
-      <div className="bg-scanner relative overflow-hidden rounded-3xl p-6 text-primary-foreground shadow-[var(--shadow-lift)] sm:p-12">
-        <div className="grid-lines absolute inset-0" aria-hidden />
+      <div className="bg-scanner-green relative overflow-hidden rounded-3xl border border-scanner-accent/30 p-6 text-foreground shadow-[var(--shadow-lift)] sm:p-12">
+        <div className="grid-lines-green absolute inset-0" aria-hidden />
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Scan a Google Business</h1>
           <p className="mx-auto mt-3 max-w-xl opacity-75">Paste a public Google Maps or Business URL to analyze available business rating and review information.</p>
 
           {keyMissing && (
-            <div className="mt-6 flex items-start gap-3 rounded-xl bg-card/10 p-4 text-left text-sm ring-1 ring-primary-foreground/20">
-              <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-star" aria-hidden />
+            <div className="mt-6 flex items-start gap-3 rounded-xl bg-card/80 p-4 text-left text-sm shadow-[var(--shadow-soft)] ring-1 ring-scanner-accent/40">
+              <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-scanner-deep" aria-hidden />
               <div className="flex-1"><b>Google Places API · Configuration required.</b> Live scanning activates automatically once the API key is added.</div>
-              <Link to="/settings" className="shrink-0 rounded-md bg-card px-3 py-1.5 text-xs font-semibold text-foreground">Configure API</Link>
+              <Link to="/settings" className="shrink-0 rounded-md bg-scanner-deep px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[var(--shadow-btn)] hover:bg-scanner-deep/90">Configure API</Link>
             </div>
           )}
 
-          <div role="tablist" aria-label="Scan mode" className="mt-6 inline-flex rounded-full bg-card/10 p-1 text-sm ring-1 ring-primary-foreground/20">
+          <div role="tablist" aria-label="Scan mode" className="mt-6 inline-flex rounded-full bg-card/70 p-1 text-sm shadow-[var(--shadow-soft)] ring-1 ring-scanner-accent/30">
             {(["single", "bulk"] as const).map((m) => (
               <button key={m} role="tab" type="button" aria-selected={mode === m} disabled={running} onClick={() => setMode(m)}
-                className={`rounded-full px-4 py-1.5 font-semibold ${mode === m ? "bg-card text-foreground" : "opacity-80"}`}>{m === "single" ? "Single URL" : "Bulk URLs"}</button>
+                className={`rounded-full px-4 py-1.5 font-semibold transition-colors ${mode === m ? "bg-card text-foreground shadow-[var(--shadow-soft)]" : "opacity-70 hover:opacity-100"}`}>{m === "single" ? "Single URL" : "Bulk URLs"}</button>
             ))}
           </div>
           {mode === "bulk" ? <BulkScan disabled={!!keyMissing} /> : <>
-          <form onSubmit={start} noValidate className="mt-6 flex flex-col gap-3 rounded-2xl bg-card p-2 shadow-[var(--shadow-glow)] sm:flex-row">
+          <form onSubmit={start} noValidate className="mt-6 flex flex-col gap-3 rounded-2xl bg-card p-2 shadow-[var(--shadow-scanner-glow)] sm:flex-row">
             <label htmlFor="maps-url" className="sr-only">Google Maps or Business URL</label>
             <div className="flex flex-1 items-center gap-3 px-3">
               <Search className="h-5 w-5 text-muted-foreground" aria-hidden />
@@ -109,7 +109,7 @@ function ScanPage() {
                 placeholder="Paste Google Maps / Business URL"
                 className="h-14 w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground" />
             </div>
-            <Button type="submit" size="lg" className="h-14 px-8" disabled={running || !!keyMissing}>
+            <Button type="submit" size="lg" variant="green" className="h-14 px-8" disabled={running || !!keyMissing}>
               {running && <Loader2 className="animate-spin" />} Scan business
             </Button>
           </form>
@@ -124,10 +124,10 @@ function ScanPage() {
                 const st = stepState(i);
                 return (
                   <li key={s} aria-current={st === "active" ? "step" : undefined}
-                    className={`relative overflow-hidden rounded-xl p-3 text-xs transition-all duration-500 ${st === "done" ? "bg-card/20" : st === "active" ? "bg-card/15 ring-1 ring-brand" : st === "failed" ? "bg-risk-high/30 ring-1 ring-risk-high" : "bg-card/5 opacity-50"}`}>
-                    {st === "active" && <div className="animate-sweep absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent" aria-hidden />}
+                    className={`relative overflow-hidden rounded-xl p-3 text-xs transition-all duration-500 ${st === "done" ? "bg-card/70" : st === "active" ? "bg-card/70 ring-1 ring-scanner-accent" : st === "failed" ? "bg-risk-high-soft ring-1 ring-risk-high" : "bg-card/40 opacity-55"}`}>
+                    {st === "active" && <div className="animate-sweep absolute inset-0 bg-gradient-to-r from-transparent via-scanner-accent/15 to-transparent" aria-hidden />}
                     <div className="relative flex items-center gap-2 font-mono opacity-80">
-                      {st === "done" ? <Check className="h-3.5 w-3.5 text-risk-normal" aria-hidden /> : st === "active" ? <span className="animate-pulse-ring h-2 w-2 rounded-full bg-brand" aria-hidden /> : st === "failed" ? <X className="h-3.5 w-3.5" aria-hidden /> : null}
+                      {st === "done" ? <Check className="h-3.5 w-3.5 text-scanner-deep" aria-hidden /> : st === "active" ? <span className="animate-pulse-ring h-2 w-2 rounded-full bg-scanner-accent" aria-hidden /> : st === "failed" ? <X className="h-3.5 w-3.5" aria-hidden /> : null}
                       0{i + 1} <span className="sr-only">{st}</span>
                     </div>
                     <div className="relative mt-1 font-medium">{s}</div>
