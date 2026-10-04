@@ -146,7 +146,7 @@ function ScanPage() {
             <div className="font-semibold">{errorTitle(error.code)}</div>
             <div className="mt-1 text-sm text-muted-foreground">{error.message}</div>
           </div>
-          {error.code === "API_KEY_REQUIRED" && <Button size="sm" variant="outline" asChild><Link to="/settings">Configure API</Link></Button>}
+          {error.code === "GOOGLE_API_NOT_CONFIGURED" && <Button size="sm" variant="outline" asChild><Link to="/settings">Configure API</Link></Button>}
         </div>
       )}
 
