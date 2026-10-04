@@ -12,3 +12,6 @@
 - [x] VPS deployment: Dockerfile, compose, nginx, scripts/, DEPLOYMENT.md, API.md
 - [x] Phase 4: deep audit — tracking (scan_events), Action Center, Quality Center, Error Center, System Quality + debug findings, AI verification/cache
 - [ ] Phase 4 live checks: real Google scan, rating accuracy, cache reuse, report success rate (blocked: Google key)
+
+- [x] Vala AI reply assistant (tones, editable draft, copy) in review panel
+- [ ] Send Report to client by email — blocked: needs sender email domain setup (user decision)
