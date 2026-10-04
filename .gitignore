@@ -31,6 +31,7 @@ dist-ssr
 *.sln
 *.sw?
 
+
 # Server deployment
-.env
+.env.production
 backups/

@@ -2,9 +2,10 @@ node_modules
 dist
 .output
 .git
-.env
-.env.*
-!.env.example
+.env.production
+
+
 backups
 .lovable
 .workspace
+.env

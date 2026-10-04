@@ -11,7 +11,7 @@ services:
     image: review-scanner:latest
     container_name: review-scanner
     restart: unless-stopped
-    env_file: .env
+    env_file: .env.production
     environment:
       NODE_ENV: production
       PORT: 3000
