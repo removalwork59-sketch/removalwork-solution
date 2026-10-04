@@ -96,7 +96,7 @@ export function BulkScan({ disabled }: { disabled: boolean }) {
   const tooMany = (checked?.valid.length ?? 0) > MAX_URLS;
 
   return (
-    <div className="mt-6 rounded-2xl bg-card p-4 text-left text-foreground shadow-[var(--shadow-glow)]">
+    <div className="mt-6 rounded-2xl bg-card p-4 text-left text-foreground shadow-[var(--shadow-scanner-glow)]">
       <label htmlFor="bulk-urls" className="text-sm font-semibold">Paste URLs (one per line) or upload a CSV with a <span className="font-mono">google_url</span> column</label>
       <textarea id="bulk-urls" value={text} disabled={running} onChange={(e) => { setText(e.target.value); setChecked(null); }}
         rows={6} placeholder={"https://maps.app.goo.gl/...\nhttps://www.google.com/maps/place/..."}
