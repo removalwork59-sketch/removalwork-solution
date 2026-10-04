@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/scan/bulk/")({
         batch = data;
         await core.audit(supabase, userId, "batch.started", { batch_id: data.id, total: v.valid.length, via: "api" });
       }
-      const results: { url: string; status: string; scan_id?: string; code?: string; message?: string }[] = [];
+      const results: { url: string; status: string; scan_id?: string | undefined; code?: string; message?: string }[] = [];
       const queue = [...v.valid];
       const worker = async () => {
         for (let url = queue.shift(); url; url = queue.shift()) {

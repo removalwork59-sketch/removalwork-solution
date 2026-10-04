@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/scan/bulk/$id/retry")({
       const latest = new Map<string, string>();
       for (const s of scans ?? []) if (!latest.has(s.source_url)) latest.set(s.source_url, s.status);
       const failed = [...latest].filter(([, st]) => st === "failed").map(([u]) => u).slice(0, 25);
-      const results: { url: string; status: string; scan_id?: string; code?: string; message?: string }[] = [];
+      const results: { url: string; status: string; scan_id?: string | undefined; code?: string; message?: string }[] = [];
       for (const url of failed) {
         const f = await core.scanFetchCore(supabase, userId, { url, batchId: batch.id });
         if (!f.ok) { results.push({ url, status: "failed", scan_id: f.scanId, code: a.apiCode(f.code), message: f.message }); continue; }

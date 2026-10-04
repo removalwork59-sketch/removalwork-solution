@@ -19,7 +19,7 @@ export function validGoogleUrl(raw: string) {
 
 
 /** Stage 1: resolve business, read public place data, retrieve available reviews. */
-export async function scanFetchCore(supabase: any, userId: string, data: { url: string; batchId?: string }): Promise<StageResponse> {
+export async function scanFetchCore(supabase: any, userId: string, data: { url: string; batchId?: string | undefined }): Promise<StageResponse> {
     if (!validGoogleUrl(data.url)) return { ok: false, code: "INVALID_URL", message: "This isn't a Google Maps or Business link. Paste a link like google.com/maps/place/… or maps.app.goo.gl/…" };
     const googleKey = process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"];
     if (!googleKey) return { ok: false, code: "GOOGLE_API_NOT_CONFIGURED", message: "Google Places API is not configured. Add the API key in Settings." };
@@ -70,10 +70,10 @@ export async function scanAnalyzeCore(supabase: any, userId: string, data: { sca
       const { data: reviews, error } = await supabase.from("reviews").select("*").eq("scan_id", scan.id);
       if (error) throw new ScanError("DB_UNAVAILABLE", "Database unavailable.");
       if (!reviews?.length) throw new ScanError("INSUFFICIENT_DATA", "Insufficient data — no reviews to analyze.");
-      const analysis = await analyzeReviews(aiKey, scan.business_name ?? "", scan.category, reviews.map((r) => ({
+      const analysis = await analyzeReviews(aiKey, scan.business_name ?? "", scan.category, reviews.map((r: any) => ({
         author: r.author, authorUri: r.author_uri, rating: r.rating, publishedAt: r.published_at, relativeTime: r.relative_time, text: r.text ?? "", reviewUri: r.review_uri,
       })));
-      const ins = await supabase.from("review_analyses").insert(reviews.map((r, i) => ({ review_id: r.id, scan_id: scan.id, model: ANALYSIS_MODEL, analysis_provider: AI_PROVIDER, analysis_version: APP_VERSION, ...analysis[i]! })));
+      const ins = await supabase.from("review_analyses").insert(reviews.map((r: any, i: number) => ({ review_id: r.id, scan_id: scan.id, model: ANALYSIS_MODEL, analysis_provider: AI_PROVIDER, analysis_version: APP_VERSION, ...analysis[i]! })));
       if (ins.error) throw new ScanError("DB_UNAVAILABLE", "Database unavailable — analysis could not be saved.");
       const n = (k: string) => analysis.filter((a) => a.risk === k).length;
       const high = n("high"), medium = n("medium");
