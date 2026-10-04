@@ -25,7 +25,11 @@ function ReportDetail() {
     if (data?.scan && !data.scan.is_seed) audit({ data: { action: "report.downloaded", detail: { scan_id: id } } }).catch(() => {});
     window.print();
   }
-  useEffect(() => { if (print && data?.scan) { const t = setTimeout(download, 400); return () => clearTimeout(t); } }, [print, data]);
+  useEffect(() => {
+    if (!print || !data?.scan) return undefined;
+    const t = setTimeout(download, 400);
+    return () => clearTimeout(t);
+  }, [print, data]);
 
   if (isLoading) return <div className="text-muted-foreground">Preparing report…</div>;
   if (!data?.scan) return <div>Report not found. <Link to="/reports" className="text-brand">Back to reports</Link></div>;

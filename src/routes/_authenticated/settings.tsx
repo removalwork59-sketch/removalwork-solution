@@ -23,7 +23,7 @@ const hMeta: Record<H, [string, string, typeof CheckCircle2]> = {
   warning: ["Warning", "bg-risk-medium-soft text-risk-medium", AlertTriangle],
   unavailable: ["Unavailable", "bg-risk-high-soft text-risk-high", XCircle],
 };
-function HBadge({ s, label }: { s: H | undefined; label?: string }) {
+function HBadge({ s, label }: { s: H | undefined; label?: string | undefined }) {
   if (!s) return <span className="text-xs text-muted-foreground">Checking…</span>;
   const [l, cls, Icon] = hMeta[s];
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}><Icon className="h-3.5 w-3.5" aria-hidden />{label ?? l}</span>;
@@ -52,13 +52,13 @@ function SettingsPage() {
 
   async function saveName() {
     const { error } = await supabase.auth.updateUser({ data: { name } });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Name saved"); log({ data: { action: "settings.profile_updated" } }).then(() => auditQ.refetch());
   }
   async function changePw(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.auth.updateUser({ password: pw, current_password: cur } as any);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Password updated"); setCur(""); setPw("");
     log({ data: { action: "settings.password_changed" } }).then(() => auditQ.refetch());
   }
