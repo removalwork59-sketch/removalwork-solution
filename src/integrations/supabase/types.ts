@@ -14,6 +14,173 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      businesses: {
+        Row: {
+          address: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_seed: boolean
+          maps_uri: string | null
+          name: string
+          place_id: string | null
+          rating: number | null
+          total_reviews: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          maps_uri?: string | null
+          name: string
+          place_id?: string | null
+          rating?: number | null
+          total_reviews?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          maps_uri?: string | null
+          name?: string
+          place_id?: string | null
+          rating?: number | null
+          total_reviews?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          is_seed: boolean
+          recommended_action: string | null
+          report_number: string
+          scan_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          recommended_action?: string | null
+          report_number: string
+          scan_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_seed?: boolean
+          recommended_action?: string | null
+          report_number?: string
+          scan_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: true
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_analyses: {
+        Row: {
+          category: string | null
+          confidence: number
+          created_at: string
+          evidence: string | null
+          id: string
+          model: string | null
+          reason: string | null
+          review_id: string
+          risk: string
+          scan_id: string
+          signals: string[]
+        }
+        Insert: {
+          category?: string | null
+          confidence?: number
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          model?: string | null
+          reason?: string | null
+          review_id: string
+          risk?: string
+          scan_id: string
+          signals?: string[]
+        }
+        Update: {
+          category?: string | null
+          confidence?: number
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          model?: string | null
+          reason?: string | null
+          review_id?: string
+          risk?: string
+          scan_id?: string
+          signals?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_analyses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_analyses_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           author: string
@@ -82,6 +249,7 @@ export type Database = {
       scans: {
         Row: {
           address: string | null
+          business_id: string | null
           business_name: string | null
           category: string | null
           created_at: string
@@ -95,13 +263,17 @@ export type Database = {
           normal_count: number
           place_id: string | null
           rating: number | null
+          requires_review_count: number
+          reviews_retrieved: number
           source_url: string
+          stage: string | null
           status: string
           total_reviews: number | null
           user_id: string | null
         }
         Insert: {
           address?: string | null
+          business_id?: string | null
           business_name?: string | null
           category?: string | null
           created_at?: string
@@ -115,13 +287,17 @@ export type Database = {
           normal_count?: number
           place_id?: string | null
           rating?: number | null
+          requires_review_count?: number
+          reviews_retrieved?: number
           source_url: string
+          stage?: string | null
           status?: string
           total_reviews?: number | null
           user_id?: string | null
         }
         Update: {
           address?: string | null
+          business_id?: string | null
           business_name?: string | null
           category?: string | null
           created_at?: string
@@ -135,12 +311,23 @@ export type Database = {
           normal_count?: number
           place_id?: string | null
           rating?: number | null
+          requires_review_count?: number
+          reviews_retrieved?: number
           source_url?: string
+          stage?: string | null
           status?: string
           total_reviews?: number | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
