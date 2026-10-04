@@ -11,7 +11,7 @@ const CONCURRENCY = 2; // keep Google request rate low
 const MAX_URLS = 500;
 
 type RowStatus = "pending" | "processing" | "completed" | "partial" | "failed";
-type Row = { url: string; status: RowStatus; scanId?: string; error?: string; business?: string | null; rating?: number | null; reviews?: number; high?: number; medium?: number };
+type Row = { url: string; status: RowStatus; scanId?: string | undefined; error?: string | undefined; business?: string | null | undefined; rating?: number | null | undefined; reviews?: number | undefined; high?: number | undefined; medium?: number | undefined };
 type Checked = { valid: string[]; invalid: string[]; duplicates: string[] };
 
 export function isGoogleUrl(v: string) {
