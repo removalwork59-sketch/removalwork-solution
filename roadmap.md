@@ -5,3 +5,6 @@
 - [x] Canonical domain removalworksolution.online via config
 - [ ] Google Places API key (waiting on user)
 - [ ] Connect removalworksolution.online in project domain settings (user action, after publishing)
+
+- [x] Phase 3: bulk URL scanning (paste/CSV, validation, batches, retry)
+- [ ] Morning handoff: add Google key, run real single + small bulk scan (blocked: key)
