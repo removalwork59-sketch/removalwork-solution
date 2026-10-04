@@ -52,7 +52,8 @@ export const DEFAULT_CONTENT: SiteContent = {
   footerLinks: [
     { label: "Privacy", href: "/privacy" },
     { label: "Terms", href: "/terms" },
-    { label: "Responsible Use", href: "#responsible" },
+    { label: "Responsible Use", href: "/responsible-use" },
+    { label: "Contact", href: "/contact" },
   ],
   socialLinks: [],
   seoTitle: "Google Review Intelligence & Risk Analysis",
