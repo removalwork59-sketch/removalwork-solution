@@ -158,12 +158,12 @@ export async function scanAnalyzeCore(supabase: any, userId: string, data: { sca
     const fresh = todo.length ? await analyzeReviews(aiKey, scan.business_name ?? "", scan.category, todo.map((r: any) => ({
       author: r.author, authorUri: r.author_uri, rating: r.rating, publishedAt: r.published_at, relativeTime: r.relative_time, text: r.text ?? "", reviewUri: r.review_uri,
     }))) : [];
-    const freshById = new Map(todo.map((r: any, i: number) => [r.id, enforceEvidence(fresh[i]!)]));
+    const freshById = new Map<string, ReviewAnalysis>(todo.map((r: any, i: number) => [r.id, enforceEvidence(fresh[i]!)]));
 
     // Second-model verification for new high/medium flags.
     const toVerify = todo.filter((r: any) => ["high", "medium"].includes(freshById.get(r.id)!.risk));
     const verdicts = await verifyFlags(aiKey, toVerify.map((r: any) => ({ text: r.text ?? "", rating: r.rating, first: freshById.get(r.id)! })));
-    const verById = new Map(toVerify.map((r: any, i: number) => [r.id, verdicts[i]]));
+    const verById = new Map<string, any>(toVerify.map((r: any, i: number) => [r.id, verdicts[i]]));
 
     const final = reviews.map((r: any) => {
       const c: any = cache.get(r.content_hash);
@@ -184,7 +184,7 @@ export async function scanAnalyzeCore(supabase: any, userId: string, data: { sca
     await track(supabase, userId, scan.id, "ANALYSIS_COMPLETED", t, `${todo.length} analyzed, ${reviews.length - todo.length} reused from cache, ${toVerify.length} verified by second model`);
 
     const analysis = final.map((f: any) => f.a as ReviewAnalysis);
-    const n = (k: string) => analysis.filter((a) => a.risk === k).length;
+    const n = (k: string) => analysis.filter((a: ReviewAnalysis) => a.risk === k).length;
     const high = n("high"), medium = n("medium");
 
     t = Date.now();
