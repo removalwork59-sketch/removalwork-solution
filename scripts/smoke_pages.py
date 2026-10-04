@@ -17,12 +17,14 @@ Requires: playwright (python) with chromium installed.
 import asyncio
 import os
 import sys
+from pathlib import Path
 
 from playwright.async_api import async_playwright
 
 BASE = os.environ.get("BASE_URL", "http://localhost:8080").rstrip("/")
 EMAIL = os.environ.get("ADMIN_EMAIL", "removalwork59@gmail.com")
 PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+ARTIFACTS = Path(os.environ.get("ARTIFACTS_DIR", "smoke-artifacts"))
 
 PUBLIC = ["/", "/auth", "/privacy", "/terms", "/responsible-use", "/contact"]
 PRIVATE = ["/dashboard", "/scan", "/history", "/reports", "/settings", "/profile"]
@@ -30,7 +32,11 @@ PRIVATE = ["/dashboard", "/scan", "/history", "/reports", "/settings", "/profile
 MIN_TEXT_LEN = 20  # a rendered page always has more text than this
 
 
-async def check_page(page, route, failures):
+def slug(route):
+    return route.strip("/").replace("/", "-") or "home"
+
+
+async def check_page(page, route, failures, console_msgs):
     await page.goto(f"{BASE}{route}", wait_until="domcontentloaded")
     await page.wait_for_timeout(3000)
     await page.reload(wait_until="domcontentloaded")
@@ -40,6 +46,14 @@ async def check_page(page, route, failures):
     print(f"{'PASS' if ok else 'FAIL'} {route} (text length after refresh: {text_len})")
     if not ok:
         failures.append(route)
+        ARTIFACTS.mkdir(parents=True, exist_ok=True)
+        try:
+            await page.screenshot(path=str(ARTIFACTS / f"{slug(route)}.png"))
+        except Exception:
+            pass
+        (ARTIFACTS / f"{slug(route)}-console.log").write_text(
+            "\n".join(console_msgs) or "(no console output)"
+        )
 
 
 async def main():
@@ -49,7 +63,9 @@ async def main():
         ctx = await browser.new_context(viewport={"width": 1280, "height": 1800})
         page = await ctx.new_page()
         page_errors = []
+        console_msgs = []
         page.on("pageerror", lambda e: page_errors.append(str(e)[:200]))
+        page.on("console", lambda m: console_msgs.append(f"[{m.type}] {m.text[:200]}"))
 
         if PASSWORD:
             for attempt in range(3):
@@ -70,10 +86,18 @@ async def main():
 
         for route in PUBLIC + (PRIVATE if PASSWORD else []):
             try:
-                await check_page(page, route, failures)
+                await check_page(page, route, failures, console_msgs)
             except Exception as e:
                 print(f"FAIL {route} (exception: {str(e)[:150]})")
                 failures.append(route)
+                ARTIFACTS.mkdir(parents=True, exist_ok=True)
+                try:
+                    await page.screenshot(path=str(ARTIFACTS / f"{slug(route)}.png"))
+                except Exception:
+                    pass
+                (ARTIFACTS / f"{slug(route)}-console.log").write_text(
+                    "\n".join(console_msgs) or "(no console output)"
+                )
 
         if page_errors:
             print("page errors seen:", page_errors[:5])
