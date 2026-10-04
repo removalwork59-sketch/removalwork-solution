@@ -23,7 +23,7 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 100  # real-expiry run waits out the full configured TTL (~1h)
     steps:
       - uses: actions/checkout@v4
 
