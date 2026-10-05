@@ -19,7 +19,7 @@ export const getSystemStatus = createServerFn({ method: "GET" })
     const tables = await Promise.all(["businesses", "review_analyses", "reports", "audit_log"].map((t) =>
       context.supabase.from(t as "reports").select("id", { head: true, count: "exact" })));
     const migrationsOk = tables.every((r) => !r.error);
-    const googleConfigured = Boolean((process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_MAPS_API_KEY"]));
+    const googleConfigured = Boolean((process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_API_KEY"]));
     const aiConfigured = Boolean(process.env["LOVABLE_API_KEY"]);
     const checks: { name: string; status: Health; detail: string }[] = [
       { name: "Application", status: "healthy", detail: `Version ${APP_VERSION} responding` },

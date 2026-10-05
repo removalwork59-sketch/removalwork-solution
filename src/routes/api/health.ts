@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/health")({
         database = d.status < 500 ? "healthy" : "unavailable";
       }
     } catch { /* unavailable */ }
-    const google: S = (process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"]) ? "healthy" : "warning";
+    const google: S = (process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_API_KEY"]) ? "healthy" : "warning";
     const ai: S = process.env["LOVABLE_API_KEY"] ? "healthy" : "warning";
     const checks = { application: "healthy" as S, database, authentication, google_api: google, ai };
     const vals = Object.values(checks);
