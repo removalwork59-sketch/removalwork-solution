@@ -75,7 +75,7 @@ function healthScore(rating: number | null, reviews: { rating: number }[], analy
 /** Stage 1: resolve business, read public place data, retrieve available reviews. */
 export async function scanFetchCore(supabase: any, userId: string, data: { url: string; batchId?: string | undefined }): Promise<StageResponse> {
   if (!validGoogleUrl(data.url)) return { ok: false, code: "INVALID_URL", message: "This isn't a Google Maps or Business link. Paste a link like google.com/maps/place/… or maps.app.goo.gl/…" };
-  const googleKey = process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"];
+  const googleKey = process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_API_KEY"];
   if (!googleKey) return { ok: false, code: "GOOGLE_API_NOT_CONFIGURED", message: "Google Places API is not configured. Add the API key in Settings." };
 
   await sweepStale(supabase, userId);

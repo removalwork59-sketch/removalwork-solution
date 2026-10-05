@@ -23,5 +23,5 @@
 - Canonical app URL comes from `VITE_PUBLIC_APP_URL` via `src/lib/config.ts`, so the domain can change without code edits.
 - Public sign-up is disabled (single admin); profile data lives in `profiles`, avatars in the private `avatars` bucket via signed URLs.
 - Bulk scans: `scan_batches` groups scans via `scans.batch_id`; the browser runs per-URL stages with concurrency 2 (no queue infra) to avoid flooding Google.
-- Google key is read from `GOOGLE_PLACES_API_KEY` or `GOOGLE_MAPS_API_KEY`.
+- Google key is read from `GOOGLE_MAPS_API_KEY`, `GOOGLE_PLACES_API_KEY` or `GOOGLE_API_KEY`.
 - Public homepage content lives in `site_content` (draft + published JSON) merged over `DEFAULT_CONTENT` in `src/lib/site-content.ts`; edited in Settings, so the homepage never depends on the scanner.

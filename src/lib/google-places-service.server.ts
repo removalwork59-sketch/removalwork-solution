@@ -5,7 +5,7 @@ import { ScanError, resolveAndFetchPlace, parseMapsUrl, type PlaceResult, type P
 export const GOOGLE_REPORT_HELP_URL = "https://support.google.com/business/answer/4596773";
 
 export function getGoogleKey(): string | null {
-  return process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"] || null;
+  return process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_API_KEY"] || null;
 }
 
 function requireKey(): string {
