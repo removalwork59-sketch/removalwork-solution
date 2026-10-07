@@ -69,13 +69,19 @@ async function expandShortLink(url: string): Promise<string> {
   }
 }
 
-type Parsed = { placeId?: string; query?: string; lat?: number; lng?: number };
+type Parsed = { placeId?: string; query?: string; lat?: number; lng?: number; cid?: string };
 
 export function parseMapsUrl(raw: string): Parsed {
   const url = new URL(raw);
   const p = url.searchParams;
   const pid = p.get("query_place_id") || p.get("place_id") || p.get("cid_place_id");
   if (pid) return { placeId: pid };
+  // Review-share links (maps.app.goo.gl → /maps/reviews/data=…) carry the
+  // business as a hex CID like !1s0x0:0x31fa1495830fb5a — convert to decimal.
+  const hexCid = raw.match(/!1s0x[0-9a-f]+:0x([0-9a-f]+)/i)?.[1];
+  if (hexCid) return { cid: BigInt(`0x${hexCid}`).toString(10) };
+  const cidParam = p.get("cid");
+  if (cidParam && /^\d+$/.test(cidParam)) return { cid: cidParam };
   const q = p.get("q") || p.get("query");
   if (q?.startsWith("place_id:")) return { placeId: q.slice(9) };
   const out: Parsed = {};
