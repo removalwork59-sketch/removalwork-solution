@@ -102,6 +102,38 @@ export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Pr
   try { parsed = parseMapsUrl(url); } catch { throw new ScanError("INVALID_URL", "That doesn't look like a valid Google Maps link."); }
 
   let placeId = parsed.placeId;
+  if (!placeId && parsed.cid) {
+    // CID links don't map directly to a Places ID. Open the public Maps page
+    // for that CID, read its coordinates, then find the place there.
+    let lat: number | null = null;
+    let lng: number | null = null;
+    try {
+      const page = await fetch(`https://www.google.com/maps?cid=${parsed.cid}`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        redirect: "follow",
+      });
+      const html = await page.text();
+      const nums = html.match(/-?\d{2,3}\.\d{6,}/g) ?? [];
+      const counts = new Map<string, number>();
+      for (const n of nums) counts.set(n, (counts.get(n) ?? 0) + 1);
+      const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => Number(n));
+      lat = top.find((n) => Math.abs(n) <= 90) ?? null;
+      lng = top.find((n) => Math.abs(n) > 90 && Math.abs(n) <= 180) ?? null;
+    } catch { /* fall through to error below */ }
+    if (lat == null || lng == null) {
+      throw new ScanError("INVALID_URL", "Couldn't find a business in that link. Open the business on Google Maps and copy its link.");
+    }
+    const nearby = await googleFetch(apiKey, "/places:searchNearby", {
+      method: "POST",
+      body: JSON.stringify({
+        locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 100 } },
+        maxResultCount: 1,
+      }),
+      fieldMask: "places.id",
+    });
+    placeId = nearby?.places?.[0]?.id;
+    if (!placeId) throw new ScanError("NOT_FOUND", "Business not found on Google. Try a different link.");
+  }
   if (!placeId) {
     if (!parsed.query) throw new ScanError("INVALID_URL", "Couldn't find a business in that link. Open the business on Google Maps and copy its link.");
     const body: Record<string, unknown> = { textQuery: parsed.query, pageSize: 1 };
