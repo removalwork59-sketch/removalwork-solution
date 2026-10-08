@@ -157,7 +157,7 @@ function ScanPage() {
 
 function errorTitle(code: string) {
   return ({
-    INVALID_URL: "Invalid Google URL", NOT_FOUND: "Business not found", API_UNAVAILABLE: "Google API error",
+    INVALID_URL: "Invalid Google URL", RESOLVE_FAILED: "Link could not be resolved", NOT_FOUND: "Business not found", API_UNAVAILABLE: "Google API error",
     GOOGLE_API_NOT_CONFIGURED: "Google API not configured", RATE_LIMIT: "API quota / rate limit", INSUFFICIENT_DATA: "Insufficient data",
     NO_REVIEWS: "No available reviews", GOOGLE_ERROR: "Google API error", NETWORK: "Network error",
     AI_UNAVAILABLE: "AI analysis unavailable", DB_UNAVAILABLE: "Database unavailable",

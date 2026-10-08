@@ -60,13 +60,25 @@ async function googleFetch(apiKey: string, path: string, init: RequestInit & { f
   return res.json();
 }
 
+const ALLOWED_HOST = /^(maps\.app\.goo\.gl|goo\.gl|g\.page|g\.co|maps\.google\.[a-z.]+|(www\.)?google\.[a-z.]+)$/;
 async function expandShortLink(url: string): Promise<string> {
-  try {
-    const res = await fetch(url, { redirect: "follow" });
-    return res.url || url;
-  } catch {
-    return url;
+  // SSRF-safe: only Google hosts, max 5 hops, 8s timeout, body never read.
+  let cur = url;
+  for (let i = 0; i < 5; i++) {
+    const u = new URL(cur);
+    if (u.hostname === "consent.google.com" && u.searchParams.get("continue")) { cur = u.searchParams.get("continue")!; continue; }
+    if (/(^|\.)google\.[a-z.]+$/.test(u.hostname) && u.pathname.startsWith("/maps")) return cur;
+    if (u.protocol !== "https:" || !ALLOWED_HOST.test(u.hostname)) throw new ScanError("RESOLVE_FAILED", `Short link redirected to a non-Google host (${u.hostname}).`);
+    let res: Response;
+    try { res = await fetch(cur, { redirect: "manual", signal: AbortSignal.timeout(8000) }); }
+    catch { throw new ScanError("RESOLVE_FAILED", "Valid short link, but Google did not answer the redirect in time. Try again."); }
+    const loc = res.headers.get("location");
+    try { await res.body?.cancel(); } catch { /* ignore */ }
+    if (res.status >= 300 && res.status < 400 && loc) { cur = new URL(loc, cur).toString(); continue; }
+    if (res.status >= 400) throw new ScanError("RESOLVE_FAILED", `Valid short link, but Google returned ${res.status} while resolving it.`);
+    return cur;
   }
+  throw new ScanError("RESOLVE_FAILED", "Short link had too many redirects.");
 }
 
 type Parsed = { placeId?: string; query?: string; lat?: number; lng?: number; cid?: string };
@@ -95,13 +107,17 @@ export function parseMapsUrl(raw: string): Parsed {
 
 const DETAILS_MASK = "id,displayName,formattedAddress,rating,userRatingCount,googleMapsUri,primaryTypeDisplayName,reviews,location";
 
-export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Promise<PlaceResult> {
+export async function resolveAndFetchPlace(apiKey: string, inputUrl: string, cidLookup?: (cid: string) => Promise<string | null>): Promise<PlaceResult> {
   let url = inputUrl.trim();
   if (/goo\.gl|g\.page|maps\.app/.test(url)) url = await expandShortLink(url);
   let parsed: Parsed;
   try { parsed = parseMapsUrl(url); } catch { throw new ScanError("INVALID_URL", "That doesn't look like a valid Google Maps link."); }
 
   let placeId = parsed.placeId;
+  if (!placeId && parsed.cid && cidLookup) {
+    // Known business: Google's own googleMapsUri (stored earlier) carries this CID.
+    try { placeId = (await cidLookup(parsed.cid)) ?? undefined; } catch { /* continue */ }
+  }
   if (!placeId && parsed.cid) {
     // Preferred: Google's own CID → place_id lookup (needs "Places API" on the key).
     try {
@@ -129,7 +145,7 @@ export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Pr
       lng = top.find((n) => Math.abs(n) > 90 && Math.abs(n) <= 180) ?? null;
     } catch { /* fall through to error below */ }
     if (lat == null || lng == null) {
-      throw new ScanError("INVALID_URL", "Couldn't find a business in that link. Open the business on Google Maps and copy its link.");
+      throw new ScanError("RESOLVE_FAILED", `Valid Google link, but it only carries an internal business ID (CID ${parsed.cid}). Resolving it needs the "Places API" (legacy) on your key, or paste the business's google.com/maps/place/… link.`);
     }
     const nearby = await googleFetch(apiKey, "/places:searchNearby", {
       method: "POST",
