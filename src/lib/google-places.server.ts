@@ -103,6 +103,14 @@ export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Pr
 
   let placeId = parsed.placeId;
   if (!placeId && parsed.cid) {
+    // Preferred: Google's own CID → place_id lookup (needs "Places API" on the key).
+    try {
+      const r = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?cid=${parsed.cid}&fields=place_id&key=${encodeURIComponent(apiKey)}`);
+      const j: any = await r.json();
+      if (j?.result?.place_id) placeId = j.result.place_id;
+    } catch { /* fall back below */ }
+  }
+  if (!placeId && parsed.cid) {
     // CID links don't map directly to a Places ID. Open the public Maps page
     // for that CID, read its coordinates, then find the place there.
     let lat: number | null = null;
