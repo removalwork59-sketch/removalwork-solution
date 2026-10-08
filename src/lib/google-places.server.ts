@@ -66,6 +66,8 @@ async function expandShortLink(url: string): Promise<string> {
   let cur = url;
   for (let i = 0; i < 5; i++) {
     const u = new URL(cur);
+    if (u.hostname === "consent.google.com" && u.searchParams.get("continue")) { cur = u.searchParams.get("continue")!; continue; }
+    if (/(^|\.)google\.[a-z.]+$/.test(u.hostname) && u.pathname.startsWith("/maps")) return cur;
     if (u.protocol !== "https:" || !ALLOWED_HOST.test(u.hostname)) throw new ScanError("RESOLVE_FAILED", `Short link redirected to a non-Google host (${u.hostname}).`);
     let res: Response;
     try { res = await fetch(cur, { redirect: "manual", signal: AbortSignal.timeout(8000) }); }
