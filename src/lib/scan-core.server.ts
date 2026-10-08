@@ -20,7 +20,7 @@ export async function track(supabase: any, userId: string, scanId: string, stage
 }
 
 const MODULE: Record<string, string> = {
-  INVALID_URL: "google", NOT_FOUND: "google", RATE_LIMIT: "google", API_UNAVAILABLE: "google", GOOGLE_ERROR: "google", NETWORK: "google",
+  INVALID_URL: "google", RESOLVE_FAILED: "google", NOT_FOUND: "google", RATE_LIMIT: "google", API_UNAVAILABLE: "google", GOOGLE_ERROR: "google", NETWORK: "google",
   NO_REVIEWS: "google", AI_UNAVAILABLE: "ai", DB_UNAVAILABLE: "database", REPORT_ERROR: "report", TIMEOUT: "scan", INSUFFICIENT_DATA: "scan",
 };
 const SEVERITY: Record<string, string> = { DB_UNAVAILABLE: "HIGH", AI_UNAVAILABLE: "HIGH", REPORT_ERROR: "HIGH", RATE_LIMIT: "MEDIUM", GOOGLE_ERROR: "MEDIUM", TIMEOUT: "MEDIUM" };
