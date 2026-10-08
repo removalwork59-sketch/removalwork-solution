@@ -95,13 +95,17 @@ export function parseMapsUrl(raw: string): Parsed {
 
 const DETAILS_MASK = "id,displayName,formattedAddress,rating,userRatingCount,googleMapsUri,primaryTypeDisplayName,reviews,location";
 
-export async function resolveAndFetchPlace(apiKey: string, inputUrl: string): Promise<PlaceResult> {
+export async function resolveAndFetchPlace(apiKey: string, inputUrl: string, cidLookup?: (cid: string) => Promise<string | null>): Promise<PlaceResult> {
   let url = inputUrl.trim();
   if (/goo\.gl|g\.page|maps\.app/.test(url)) url = await expandShortLink(url);
   let parsed: Parsed;
   try { parsed = parseMapsUrl(url); } catch { throw new ScanError("INVALID_URL", "That doesn't look like a valid Google Maps link."); }
 
   let placeId = parsed.placeId;
+  if (!placeId && parsed.cid && cidLookup) {
+    // Known business: Google's own googleMapsUri (stored earlier) carries this CID.
+    try { placeId = (await cidLookup(parsed.cid)) ?? undefined; } catch { /* continue */ }
+  }
   if (!placeId && parsed.cid) {
     // Preferred: Google's own CID → place_id lookup (needs "Places API" on the key).
     try {

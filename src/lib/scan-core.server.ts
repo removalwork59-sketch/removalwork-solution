@@ -96,7 +96,11 @@ export async function scanFetchCore(supabase: any, userId: string, data: { url: 
   try {
     let t = Date.now();
     await track(supabase, userId, scan.id, "PROCESSING", t);
-    const place = await resolveAndFetchPlace(googleKey, data.url);
+    const place = await resolveAndFetchPlace(googleKey, data.url, async (cid) => {
+      const { data: hit } = await supabase.from("businesses").select("place_id").eq("user_id", userId)
+        .or(`maps_uri.ilike.%cid=${cid}&%,maps_uri.ilike.%cid=${cid}`).not("place_id", "is", null).limit(1);
+      return hit?.[0]?.place_id ?? null;
+    });
     await track(supabase, userId, scan.id, "BUSINESS_RESOLVED", t, place.name);
     const biz = await supabase.from("businesses").upsert({
       user_id: userId, place_id: place.placeId, name: place.name, category: place.category, address: place.address,
