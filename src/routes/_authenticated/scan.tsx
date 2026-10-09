@@ -2,8 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Loader2, Search, KeyRound, AlertTriangle, X } from "lucide-react";
-import { scanFetch, scanAnalyze, getSystemStatus } from "@/lib/scan.functions";
+import { Check, Loader2, Search, KeyRound, AlertTriangle, X, Stethoscope } from "lucide-react";
+import { scanFetch, scanAnalyze, getSystemStatus, diagnoseGoogleReviews } from "@/lib/scan.functions";
 import { scanQuery } from "@/lib/data";
 import { BusinessHeader, RatingAnalysis, RiskAnalysis } from "@/components/scan-result";
 import { Button } from "@/components/ui/button";
@@ -149,6 +149,8 @@ function ScanPage() {
           {error.code === "GOOGLE_API_NOT_CONFIGURED" && <Button size="sm" variant="outline" asChild><Link to="/settings">Configure API</Link></Button>}
         </div>
       )}
+
+      {error?.code === "NO_REVIEWS" && scanId && <NoReviewsDiagnostic scanId={scanId} />}
 
       {scanId && phase !== "fetch" && <ScanResult id={scanId} />}
     </>
