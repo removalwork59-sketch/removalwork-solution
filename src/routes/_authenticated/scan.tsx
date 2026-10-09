@@ -166,6 +166,69 @@ function errorTitle(code: string) {
   } as Record<string, string>)[code] ?? "Scan failed";
 }
 
+type DiagResult =
+  | { ok: true; business: string; rating: number | null; totalReviews: number; reviewsReturned: number; billingLikelyMissing: boolean }
+  | { ok: false; code: string; message: string };
+
+function NoReviewsDiagnostic({ scanId }: { scanId: string }) {
+  const run = useServerFn(diagnoseGoogleReviews);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<DiagResult | null>(null);
+
+  async function diagnose() {
+    setBusy(true);
+    try { setResult((await run({ data: { scanId } })) as DiagResult); }
+    catch { setResult({ ok: false, code: "NETWORK", message: "Diagnostic request failed. Check your connection." }); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="surface animate-rise mt-4 border-risk-medium/30 p-5">
+      <div className="flex items-start gap-3">
+        <Stethoscope className="mt-0.5 h-5 w-5 shrink-0 text-risk-medium" aria-hidden />
+        <div className="flex-1">
+          <div className="font-semibold">Why did Google return no review text?</div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The business was found, but Google sent no review text. This almost always means a Google Cloud setup issue, not a problem with the business.
+          </p>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+            <li><b className="text-foreground">Billing not linked</b> — without a billing account on the Google Cloud project, Google silently omits review text (most common cause).</li>
+            <li><b className="text-foreground">Places API (New) not enabled</b> — enable it in APIs &amp; Services → Library.</li>
+            <li><b className="text-foreground">Key restriction</b> — if the API key has restrictions, "Places API (New)" must be in the allowed list.</li>
+          </ul>
+          <div className="mt-3 text-sm text-muted-foreground">
+            <b className="text-foreground">Next step:</b> Google Cloud Console → Billing → link a billing account to the project, wait 5–10 minutes, then scan again.
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <Button size="sm" variant="outline" onClick={diagnose} disabled={busy}>
+              {busy && <Loader2 className="animate-spin" />} Run live Google diagnostic
+            </Button>
+          </div>
+          {result && (
+            <div role="status" className="mt-3 rounded-xl bg-muted/50 p-4 text-sm ring-1 ring-border">
+              {result.ok ? (
+                <>
+                  <div><b>{result.business}</b> — rating {result.rating ?? "—"}, Google reports {result.totalReviews} total reviews.</div>
+                  <div className="mt-1">Review text returned by Google right now: <b>{result.reviewsReturned}</b></div>
+                  {result.billingLikelyMissing ? (
+                    <div className="mt-2 text-risk-high">Google confirms this business has {result.totalReviews} reviews but sent none — this is the classic sign of a missing billing account on the Cloud project. Link billing, then rescan.</div>
+                  ) : result.reviewsReturned > 0 ? (
+                    <div className="mt-2 text-risk-normal">Google is now returning review text — run the scan again.</div>
+                  ) : (
+                    <div className="mt-2">This business genuinely has no reviews on Google yet.</div>
+                  )}
+                </>
+              ) : (
+                <div>Diagnostic failed: {result.message}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ScanResult({ id }: { id: string }) {
   const { data } = useQuery(scanQuery(id));
   if (!data?.scan?.business_name) return null;
