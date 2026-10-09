@@ -50,6 +50,38 @@ export const scanAnalyze = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ scanId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<StageResponse> => scanAnalyzeCore(context.supabase, context.userId, data));
 
+/** Live probe: when a scan finds the business but Google returns no review text,
+ *  re-ask Google for this place's reviews and report exactly what came back. */
+export const diagnoseGoogleReviews = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ scanId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: scan } = await context.supabase.from("scans").select("place_id, business_name").eq("id", data.scanId).single();
+    if (!scan?.place_id) return { ok: false as const, code: "NOT_FOUND", message: "Scan not found." };
+    const key = process.env["GOOGLE_PLACES_API_KEY"] || process.env["GOOGLE_MAPS_API_KEY"] || process.env["GOOGLE_API_KEY"];
+    if (!key) return { ok: false as const, code: "GOOGLE_API_NOT_CONFIGURED", message: "Google API key is not configured." };
+    try {
+      const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(scan.place_id)}`, {
+        headers: { "X-Goog-Api-Key": key, "X-Goog-FieldMask": "rating,userRatingCount,reviews" },
+      });
+      const body = await r.text();
+      if (!r.ok) return { ok: false as const, code: "GOOGLE_ERROR", message: `Google responded ${r.status}: ${body.slice(0, 300)}` };
+      const j = JSON.parse(body);
+      const reviewsReturned = Array.isArray(j.reviews) ? j.reviews.length : 0;
+      return {
+        ok: true as const,
+        business: scan.business_name,
+        rating: j.rating ?? null,
+        totalReviews: j.userRatingCount ?? 0,
+        reviewsReturned,
+        // Google silently omits review text when the Cloud project has no billing account.
+        billingLikelyMissing: reviewsReturned === 0 && (j.userRatingCount ?? 0) > 0,
+      };
+    } catch (e) {
+      return { ok: false as const, code: "NETWORK", message: e instanceof Error ? e.message : "Diagnostic request failed." };
+    }
+  });
+
 export const logAudit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ action: z.enum(["report.downloaded", "settings.password_changed", "settings.profile_updated", "auth.logout_all"]), detail: z.record(z.string(), z.string()).optional() }).parse(d))
